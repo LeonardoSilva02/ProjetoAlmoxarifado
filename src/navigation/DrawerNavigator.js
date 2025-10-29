@@ -1,31 +1,52 @@
 import React from "react";
-import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList, DrawerItem } from "@react-navigation/drawer";
+import {
+  createDrawerNavigator,
+  DrawerContentScrollView,
+  DrawerItemList,
+  DrawerItem,
+} from "@react-navigation/drawer";
 import { Ionicons } from "@expo/vector-icons";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 
 import DashboardADM from "../screens/DashboardADM";
 import EstoqueScreen from "../screens/EstoqueScreen";
 
 const Drawer = createDrawerNavigator();
 
-// 🔹 Conteúdo customizado do menu (com botão de logout)
+// 🔹 Menu lateral customizado
 function CustomDrawerContent(props) {
   return (
-    <DrawerContentScrollView {...props}>
-      <View style={styles.drawerHeader}>
-        <Ionicons name="person-circle-outline" size={70} color="#fff" />
-        <Text style={styles.drawerTitle}>Administrador</Text>
+    <DrawerContentScrollView
+      {...props}
+      contentContainerStyle={{ flex: 1, backgroundColor: "#f8faff" }}
+    >
+      {/* Cabeçalho do Drawer */}
+      <View style={styles.header}>
+        <View style={styles.profileCircle}>
+          <Ionicons name="person-circle-outline" size={70} color="#fff" />
+        </View>
+        <Text style={styles.userName}>Administrador</Text>
+        <Text style={styles.userEmail}>adm@empresa.com</Text>
       </View>
 
-      <DrawerItemList {...props} />
+      {/* Itens de Navegação */}
+      <View style={styles.drawerItems}>
+        <DrawerItemList {...props} />
+      </View>
 
-      <DrawerItem
-        label="Logout"
-        labelStyle={{ color: "#fff", fontWeight: "bold" }}
-        style={{ backgroundColor: "#ff4d4d", borderRadius: 8, marginTop: 15 }}
-        icon={({ size }) => <Ionicons name="exit-outline" color="#fff" size={size} />}
-        onPress={() => props.navigation.navigate("Login")}
-      />
+      {/* Botão de Logout */}
+      <View style={styles.footer}>
+        <DrawerItem
+          label="Sair"
+          labelStyle={styles.logoutLabel}
+          style={styles.logoutButton}
+          icon={({ size }) => (
+            <Ionicons name="exit-outline" color="#fff" size={size} />
+          )}
+          onPress={() => props.navigation.navigate("Login")}
+        />
+        <Text style={styles.versionText}>Versão 1.0.0</Text>
+      </View>
     </DrawerContentScrollView>
   );
 }
@@ -38,10 +59,12 @@ export default function DrawerNavigator() {
       screenOptions={{
         headerStyle: { backgroundColor: "#0b5394" },
         headerTintColor: "#fff",
+        headerTitleAlign: "center",
         drawerActiveBackgroundColor: "#0b5394",
         drawerActiveTintColor: "#fff",
         drawerInactiveTintColor: "#333",
-        drawerLabelStyle: { fontSize: 16 },
+        drawerLabelStyle: { fontSize: 15, marginLeft: -10 },
+        sceneContainerStyle: { backgroundColor: "#f4f7fc" },
       }}
     >
       <Drawer.Screen
@@ -68,16 +91,57 @@ export default function DrawerNavigator() {
   );
 }
 
+// 🎨 Estilos
 const styles = StyleSheet.create({
-  drawerHeader: {
+  header: {
     backgroundColor: "#0b5394",
-    padding: 20,
+    paddingVertical: 40,
     alignItems: "center",
+    borderBottomLeftRadius: 25,
+    borderBottomRightRadius: 25,
+    elevation: 6,
   },
-  drawerTitle: {
+  profileCircle: {
+    width: 85,
+    height: 85,
+    borderRadius: 50,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  userName: {
     color: "#fff",
     fontSize: 18,
-    marginTop: 10,
     fontWeight: "bold",
+  },
+  userEmail: {
+    color: "#e0e0e0",
+    fontSize: 13,
+  },
+  drawerItems: {
+    flex: 1,
+    paddingTop: 10,
+  },
+  footer: {
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+    padding: 10,
+    marginBottom: 10,
+  },
+  logoutButton: {
+    backgroundColor: "#ff4d4d",
+    borderRadius: 10,
+  },
+  logoutLabel: {
+    color: "#fff",
+    fontWeight: "bold",
+    marginLeft: -10,
+  },
+  versionText: {
+    textAlign: "center",
+    fontSize: 12,
+    color: "#999",
+    marginTop: 8,
   },
 });
