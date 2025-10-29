@@ -3,9 +3,8 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { StatusBar } from "expo-status-bar";
 
-// Importando suas telas
 import LoginScreen from "./src/screens/LoginScreen";
-import DashboardADM from "./src/screens/DashboardADM"; // você pode criar essa depois
+import DrawerNavigator from "./src/navigation/DrawerNavigator";
 
 const Stack = createStackNavigator();
 
@@ -15,12 +14,10 @@ export default function App() {
       <StatusBar style="light" />
       <Stack.Navigator
         initialRouteName="Login"
-        screenOptions={{
-          headerShown: false, // esconde o cabeçalho padrão
-        }}
+        screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="DashboardADM" component={DashboardADM} />
+        <Stack.Screen name="DashboardADM" component={DrawerNavigator} />
       </Stack.Navigator>
     </NavigationContainer>
   );

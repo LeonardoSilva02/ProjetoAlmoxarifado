@@ -8,14 +8,15 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = () => {
-    // Lógica simples de login (exemplo)
     if (username === "adm" && password === "123") {
       navigation.navigate("DashboardADM");
     } else {
@@ -24,85 +25,137 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView
+    <LinearGradient
+      colors={["#e8f0ff", "#cfd9ff"]}
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      {/* Logo da Master’s Engenharia */}
-      <Image
-        source={require("../../assets/logo-masters.jpg")} // Verifique o nome e caminho da imagem
-        style={styles.logo}
-        resizeMode="contain"
-      />
+      <StatusBar barStyle="dark-content" backgroundColor="#e8f0ff" />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.inner}
+      >
+        {/* Logo */}
+        <View style={styles.logoContainer}>
+          <Image
+            source={require("../../assets/logo-masters.jpg")}
+            style={styles.logo}
+            resizeMode="cover"
+          />
+        </View>
 
-      {/* Título */}
-      <Text style={styles.title}>Login</Text>
+        {/* Card de login */}
+        <View style={styles.card}>
+          <Text style={styles.title}>Acesso Restrito</Text>
+          <Text style={styles.subtitle}>Entre com suas credenciais</Text>
 
-      {/* Campos */}
-      <TextInput
-        style={styles.input}
-        placeholder="Usuário"
-        value={username}
-        onChangeText={setUsername}
-        placeholderTextColor="#aaa"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Senha"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        placeholderTextColor="#aaa"
-      />
+          <TextInput
+            style={styles.input}
+            placeholder="Usuário"
+            value={username}
+            onChangeText={setUsername}
+            placeholderTextColor="#999"
+            autoCapitalize="none"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Senha"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholderTextColor="#999"
+            keyboardType="default"
+          />
 
-      {/* Botão */}
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Entrar</Text>
-      </TouchableOpacity>
-    </KeyboardAvoidingView>
+          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+            <LinearGradient
+              colors={["#0b5394", "#166ec9"]}
+              style={styles.buttonGradient}
+            >
+              <Text style={styles.buttonText}>Entrar</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1 },
+  inner: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
-    alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 20,
+    alignItems: "center",
+    paddingHorizontal: 25,
+  },
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+    backgroundColor: "#fff",
+    borderRadius: 80,
+    padding: 15,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
   },
   logo: {
-    width: 200,
-    height: 120,
-    marginBottom: 10,
+    width: 120,
+    height: 70,
+    borderRadius: 10,
+  },
+  card: {
+    backgroundColor: "#fff",
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: 25,
+    padding: 30,
+    alignItems: "center",
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "bold",
-    color: "#1a1a1a",
-    marginBottom: 20,
+    color: "#0b5394",
+    marginBottom: 5,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#777",
+    marginBottom: 25,
   },
   input: {
     width: "100%",
-    height: 50,
-    backgroundColor: "#fff",
-    borderRadius: 10,
+    height: 52,
+    backgroundColor: "#f7f9fc",
+    borderRadius: 12,
     paddingHorizontal: 15,
     marginBottom: 15,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#dde3f0",
+    color: "#333",
+    fontSize: 16,
   },
   button: {
     width: "100%",
-    backgroundColor: "#0b5394",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
+    borderRadius: 12,
+    overflow: "hidden",
     marginTop: 10,
+  },
+  buttonGradient: {
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+    letterSpacing: 0.5,
   },
 });

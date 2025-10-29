@@ -1,17 +1,12 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 
-export default function DashboardADM({ navigation }) {
+export default function DashboardADM() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Bem-vindo ao Painel do Administrador!</Text>
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate("Login")}
-      >
-        <Text style={styles.buttonText}>Sair</Text>
-      </TouchableOpacity>
+      <Text style={styles.title}>Painel Principal</Text>
+      <Text style={styles.subtitle}>Bem-vindo ao sistema do Almoxarifado!</Text>
+      <Text style={styles.info}>Use o menu lateral para navegar.</Text>
     </View>
   );
 }
@@ -25,19 +20,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   title: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: "bold",
     color: "#0b5394",
-    marginBottom: 20,
-    textAlign: "center",
+    marginBottom: 10,
   },
-  button: {
-    backgroundColor: "#0b5394",
-    padding: 15,
-    borderRadius: 10,
+  subtitle: {
+    fontSize: 18,
+    color: "#333",
   },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
+  info: {
+    marginTop: 10,
+    fontSize: 14,
+    color: "#777",
   },
 });
