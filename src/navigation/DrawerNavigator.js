@@ -1,3 +1,4 @@
+// 📁 src/navigation/DrawerNavigator.js
 import React from "react";
 import {
   createDrawerNavigator,
@@ -6,21 +7,25 @@ import {
   DrawerItem,
 } from "@react-navigation/drawer";
 import { Ionicons } from "@expo/vector-icons";
-import { View, Text, StyleSheet, Image } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 
+// 🔹 Telas
 import DashboardADM from "../screens/DashboardADM";
 import EstoqueScreen from "../screens/EstoqueScreen";
+import FerramentasScreen from "../screens/FerramentasScreen";
 
 const Drawer = createDrawerNavigator();
 
-// 🔹 Menu lateral customizado
+/* ============================================================
+   🔹 Drawer personalizado
+============================================================ */
 function CustomDrawerContent(props) {
   return (
     <DrawerContentScrollView
       {...props}
       contentContainerStyle={{ flex: 1, backgroundColor: "#f8faff" }}
     >
-      {/* Cabeçalho do Drawer */}
+      {/* Cabeçalho */}
       <View style={styles.header}>
         <View style={styles.profileCircle}>
           <Ionicons name="person-circle-outline" size={70} color="#fff" />
@@ -29,12 +34,12 @@ function CustomDrawerContent(props) {
         <Text style={styles.userEmail}>adm@empresa.com</Text>
       </View>
 
-      {/* Itens de Navegação */}
+      {/* Itens do Drawer */}
       <View style={styles.drawerItems}>
         <DrawerItemList {...props} />
       </View>
 
-      {/* Botão de Logout */}
+      {/* Rodapé */}
       <View style={styles.footer}>
         <DrawerItem
           label="Sair"
@@ -51,6 +56,9 @@ function CustomDrawerContent(props) {
   );
 }
 
+/* ============================================================
+   🔹 Navegação principal (Drawer)
+============================================================ */
 export default function DrawerNavigator() {
   return (
     <Drawer.Navigator
@@ -67,6 +75,7 @@ export default function DrawerNavigator() {
         sceneContainerStyle: { backgroundColor: "#f4f7fc" },
       }}
     >
+      {/* 🏠 Painel Principal */}
       <Drawer.Screen
         name="DashboardADM"
         component={DashboardADM}
@@ -77,6 +86,8 @@ export default function DrawerNavigator() {
           ),
         }}
       />
+
+      {/* 📦 Controle de Estoque */}
       <Drawer.Screen
         name="Estoque"
         component={EstoqueScreen}
@@ -87,11 +98,25 @@ export default function DrawerNavigator() {
           ),
         }}
       />
+
+      {/* 🔧 Ferramentas e Equipamentos */}
+      <Drawer.Screen
+        name="Ferramentas"
+        component={FerramentasScreen}
+        options={{
+          title: "Ferramentas e Equipamentos",
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="construct-outline" color={color} size={size} />
+          ),
+        }}
+      />
     </Drawer.Navigator>
   );
 }
 
-// 🎨 Estilos
+/* ============================================================
+   🎨 Estilos
+============================================================ */
 const styles = StyleSheet.create({
   header: {
     backgroundColor: "#0b5394",
