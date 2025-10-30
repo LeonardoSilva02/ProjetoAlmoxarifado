@@ -1,4 +1,3 @@
-// src/screens/FerramentasScreen.js
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -25,6 +24,7 @@ export default function FerramentasScreen() {
   const [patrimonio, setPatrimonio] = useState("");
   const [situacao, setSituacao] = useState("Funcionando");
   const [dataManutencao, setDataManutencao] = useState("");
+  const [local, setLocal] = useState(""); // 🔹 Novo campo
 
   const STORAGE_KEY = "@ferramentas_data";
 
@@ -59,6 +59,7 @@ export default function FerramentasScreen() {
     setPatrimonio("");
     setSituacao("Funcionando");
     setDataManutencao("");
+    setLocal("");
     setModalVisible(true);
   };
 
@@ -68,11 +69,12 @@ export default function FerramentasScreen() {
     setPatrimonio(item.patrimonio);
     setSituacao(item.situacao);
     setDataManutencao(item.dataManutencao || "");
+    setLocal(item.local || "");
     setModalVisible(true);
   };
 
   const confirmarSalvar = () => {
-    if (!nome.trim() || !patrimonio.trim() || !situacao) {
+    if (!nome.trim() || !patrimonio.trim() || !situacao || !local.trim()) {
       Alert.alert("Preencha todos os campos obrigatórios");
       return;
     }
@@ -88,6 +90,7 @@ export default function FerramentasScreen() {
       patrimonio: patrimonio.trim(),
       situacao,
       dataManutencao: situacao === "Em manutenção" ? dataManutencao.trim() : "",
+      local: local.trim(),
     };
 
     if (editingItem) {
@@ -138,6 +141,7 @@ export default function FerramentasScreen() {
         <View style={{ flex: 1 }}>
           <Text style={styles.nome}>{item.nome}</Text>
           <Text style={styles.meta}>Patrimônio: {item.patrimonio}</Text>
+          <Text style={styles.meta}>Local: {item.local}</Text>
           <Text style={[styles.situacao, { color }]}>{item.situacao}</Text>
           {item.situacao === "Em manutenção" && (
             <Text style={styles.meta}>
@@ -222,6 +226,14 @@ export default function FerramentasScreen() {
               placeholderTextColor="#999"
               value={patrimonio}
               onChangeText={setPatrimonio}
+            />
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Local onde se encontra (Ex: Honda, BIC, Masters...)"
+              placeholderTextColor="#999"
+              value={local}
+              onChangeText={setLocal}
             />
 
             <View style={styles.pickerWrap}>

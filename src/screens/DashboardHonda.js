@@ -1,40 +1,20 @@
-// src/screens/DashboardADM.js
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function DashboardADM({ navigation }) {
+export default function DashboardHonda({ navigation }) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* 🔹 Cabeçalho com gradiente azul */}
       <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
-        <Text style={styles.headerTitle}>Painel Administrativo</Text>
-        <Text style={styles.subText}>Gerencie os setores da empresa</Text>
+        <Text style={styles.headerTitle}>Painel Honda</Text>
+        <Text style={styles.subText}>Gerencie o estoque e ferramentas</Text>
       </LinearGradient>
 
-      {/* 🔹 Cards principais */}
       <View style={styles.grid}>
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("Estoque")}
-        >
-          <Ionicons name="cube-outline" size={40} color="#0b5394" />
-          <Text style={styles.cardText}>Controle de Estoque</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate("Ferramentas")}
-        >
-          <Ionicons name="construct-outline" size={40} color="#0b5394" />
-          <Text style={styles.cardText}>Ferramentas e Equipamentos</Text>
-        </TouchableOpacity>
-
-        {/* 🔹 Estoque Honda (renomeado) */}
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate("EstoqueHonda")}
+          onPress={() => navigation.navigate("AlmoxarifadoHonda")}
         >
           <Ionicons name="business-outline" size={40} color="#0b5394" />
           <Text style={styles.cardText}>Estoque Honda</Text>
@@ -49,7 +29,6 @@ export default function DashboardADM({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* 🔹 Botão de Logout */}
       <TouchableOpacity
         style={styles.logoutButton}
         onPress={() => navigation.navigate("Login")}
@@ -61,9 +40,6 @@ export default function DashboardADM({ navigation }) {
   );
 }
 
-/* ============================================================
-   🎨 Estilos
-============================================================ */
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,

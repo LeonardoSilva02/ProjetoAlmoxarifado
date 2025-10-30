@@ -1,3 +1,4 @@
+// src/screens/LoginScreen.js
 import React, { useState } from "react";
 import {
   View,
@@ -19,14 +20,12 @@ export default function LoginScreen({ navigation }) {
 
   const handleLogin = () => {
     if (username === "adm" && password === "123") {
-      navigation.navigate("DashboardADM");
+      navigation.navigate("DrawerNavigator"); // ADM completo
+    } else if (username === "admHonda" && password === "123") {
+      navigation.navigate("DrawerNavigatorHonda"); // ADM Honda
     } else {
-      alert("Usuário ou senha incorretos");
+      alert("Usuário ou senha incorretos ❌");
     }
-  };
-
-  const handleGoogleLogin = () => {
-    alert("Login com Google em breve 🚀");
   };
 
   return (
@@ -49,7 +48,7 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.appName}>Sistema de Almoxarifado</Text>
         </View>
 
-        {/* Card */}
+        {/* Card de Login */}
         <View style={styles.card}>
           <Text style={styles.title}>Acesso Restrito</Text>
           <Text style={styles.subtitle}>Entre com suas credenciais</Text>
@@ -78,14 +77,6 @@ export default function LoginScreen({ navigation }) {
             >
               <Text style={styles.buttonText}>Entrar</Text>
             </LinearGradient>
-          </TouchableOpacity>
-
-          <Text style={styles.orText}>ou</Text>
-
-          {/* Botão de login com Google */}
-          <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
-            <Ionicons name="logo-google" size={22} color="#DB4437" style={styles.googleIcon} />
-            <Text style={styles.googleText}>Entrar com Google</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -169,31 +160,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     letterSpacing: 0.5,
-  },
-  orText: {
-    color: "#999",
-    marginVertical: 18,
-    fontSize: 14,
-  },
-  googleButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    width: "100%",
-    justifyContent: "center",
-    elevation: 3,
-  },
-  googleIcon: {
-    marginRight: 8,
-  },
-  googleText: {
-    fontSize: 16,
-    color: "#444",
-    fontWeight: "500",
   },
 });

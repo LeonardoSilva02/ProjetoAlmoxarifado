@@ -1,4 +1,4 @@
-// src/screens/EstoqueScreen.js
+// src/screens/AlmoxarifadoHondaScreen.js
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -20,9 +20,9 @@ const Tab = createMaterialTopTabNavigator();
 
 /* -------------------------
    CategoriaTab (com AsyncStorage)
-   ------------------------- */
+------------------------- */
 function CategoriaTab({ categoriaKey, titulo }) {
-  const storageKey = `@estoque_${categoriaKey}`;
+  const storageKey = `@honda_${categoriaKey}`;
   const [itens, setItens] = useState([]);
   const [busca, setBusca] = useState("");
 
@@ -256,13 +256,13 @@ function CategoriaTab({ categoriaKey, titulo }) {
 
 /* -------------------------
    Tela principal
-   ------------------------- */
-export default function EstoqueScreen() {
+------------------------- */
+export default function AlmoxarifadoHondaScreen() {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.header}>
-        <Ionicons name="layers" size={22} color="#fff" style={{ marginRight: 8 }} />
-        <Text style={styles.headerTitle}>Controle de Estoque</Text>
+        <Ionicons name="business" size={22} color="#fff" style={{ marginRight: 8 }} />
+        <Text style={styles.headerTitle}>Almoxarifado Honda</Text>
       </View>
 
       <Tab.Navigator
@@ -274,54 +274,25 @@ export default function EstoqueScreen() {
           swipeEnabled: true,
         }}
       >
-        <Tab.Screen
-          name="Elétrica"
-          options={{
-            tabBarIcon: ({ color }) => <Ionicons name="flash" size={18} color={color} />,
-          }}
-        >
-          {() => <CategoriaTab categoriaKey="eletrica" titulo="Materiais - Elétrica" />}
+        <Tab.Screen name="Elétrica">
+          {() => <CategoriaTab categoriaKey="eletrica" titulo="Honda - Elétrica" />}
         </Tab.Screen>
-
-        <Tab.Screen
-          name="Mecânica"
-          options={{
-            tabBarIcon: ({ color }) => <Ionicons name="cog" size={18} color={color} />,
-          }}
-        >
-          {() => <CategoriaTab categoriaKey="mecanica" titulo="Materiais - Mecânica" />}
+        <Tab.Screen name="Mecânica">
+          {() => <CategoriaTab categoriaKey="mecanica" titulo="Honda - Mecânica" />}
         </Tab.Screen>
-
-        <Tab.Screen
-          name="Pintura"
-          options={{
-            tabBarIcon: ({ color }) => <Ionicons name="color-palette" size={18} color={color} />,
-          }}
-        >
-          {() => <CategoriaTab categoriaKey="pintura" titulo="Materiais - Pintura" />}
+        <Tab.Screen name="Pintura">
+          {() => <CategoriaTab categoriaKey="pintura" titulo="Honda - Pintura" />}
         </Tab.Screen>
-
-        <Tab.Screen
-          name="Porcas e Arruelas"
-          options={{
-            tabBarIcon: ({ color }) => <Ionicons name="hardware-chip" size={18} color={color} />,
-          }}
-        >
+        <Tab.Screen name="Porcas e Arruelas">
           {() => (
             <CategoriaTab
               categoriaKey="porcas_arruelas"
-              titulo="Materiais - Porcas, Arruelas e Parafusos"
+              titulo="Honda - Porcas, Arruelas e Parafusos"
             />
           )}
         </Tab.Screen>
-
-        <Tab.Screen
-          name="Chumbadores"
-          options={{
-            tabBarIcon: ({ color }) => <Ionicons name="construct" size={18} color={color} />,
-          }}
-        >
-          {() => <CategoriaTab categoriaKey="chumbadores" titulo="Materiais - Chumbadores" />}
+        <Tab.Screen name="Chumbadores">
+          {() => <CategoriaTab categoriaKey="chumbadores" titulo="Honda - Chumbadores" />}
         </Tab.Screen>
       </Tab.Navigator>
     </View>
@@ -330,7 +301,7 @@ export default function EstoqueScreen() {
 
 /* -------------------------
    Estilos
-   ------------------------- */
+------------------------- */
 const styles = StyleSheet.create({
   header: {
     backgroundColor: "#0b5394",
@@ -342,7 +313,6 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold" },
-
   tabWrap: { flex: 1, backgroundColor: "#f5f7fb", padding: 12 },
   topRow: {
     flexDirection: "row",
@@ -351,7 +321,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   tabTitle: { fontSize: 16, fontWeight: "700", color: "#0b5394" },
-
   searchRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -362,10 +331,8 @@ const styles = StyleSheet.create({
     borderColor: "#e6eaf5",
   },
   searchInput: { marginLeft: 8, minWidth: 160, height: 40, color: "#333" },
-
   emptyWrap: { flex: 1, justifyContent: "center", alignItems: "center" },
   emptyText: { color: "#777" },
-
   card: {
     flexDirection: "row",
     padding: 14,
@@ -379,10 +346,8 @@ const styles = StyleSheet.create({
   itemName: { fontSize: 16, fontWeight: "700", color: "#222", marginBottom: 6 },
   meta: { color: "#666", fontSize: 13 },
   warning: { color: "#ff4d4d", marginTop: 6, fontWeight: "700" },
-
   cardActions: { flexDirection: "row", alignItems: "center", marginLeft: 12 },
   iconBtn: { marginLeft: 8 },
-
   fab: {
     position: "absolute",
     right: 18,
@@ -395,7 +360,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     elevation: 8,
   },
-
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",

@@ -1,4 +1,4 @@
-// src/navigation/DrawerNavigator.js
+// src/navigation/DrawerNavigatorHonda.js
 import React from "react";
 import {
   createDrawerNavigator,
@@ -11,38 +11,30 @@ import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
 // 🔹 Telas
-import DashboardADM from "../screens/DashboardADM";
-import EstoqueScreen from "../screens/EstoqueScreen";
-import FerramentasScreen from "../screens/FerramentasScreen";
+import DashboardHonda from "../screens/DashboardHonda";
 import AlmoxarifadoHondaScreen from "../screens/AlmoxarifadoHondaScreen";
 import FerramentasHondaScreen from "../screens/FerramentasHondaScreen";
 
 const Drawer = createDrawerNavigator();
 
-/* ============================================================
-   🔹 Drawer personalizado estilizado
-============================================================ */
 function CustomDrawerContent(props) {
   return (
     <DrawerContentScrollView
       {...props}
       contentContainerStyle={{ flex: 1, backgroundColor: "#f8faff" }}
     >
-      {/* 🔹 Cabeçalho com gradiente */}
       <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
         <View style={styles.profileCircle}>
           <Ionicons name="person-circle-outline" size={70} color="#fff" />
         </View>
-        <Text style={styles.userName}>Administrador</Text>
-        <Text style={styles.userEmail}>adm@empresa.com</Text>
+        <Text style={styles.userName}>ADM Honda</Text>
+        <Text style={styles.userEmail}>adm.honda@empresa.com</Text>
       </LinearGradient>
 
-      {/* Itens do Drawer (ajustados para clique correto) */}
       <View style={styles.drawerItems}>
         <DrawerItemList {...props} />
       </View>
 
-      {/* 🔹 Rodapé */}
       <View style={styles.footer}>
         <View style={styles.separator} />
         <DrawerItem
@@ -60,13 +52,10 @@ function CustomDrawerContent(props) {
   );
 }
 
-/* ============================================================
-   🔹 Navegação principal
-============================================================ */
-export default function DrawerNavigator() {
+export default function DrawerNavigatorHonda() {
   return (
     <Drawer.Navigator
-      initialRouteName="DashboardADM"
+      initialRouteName="DashboardHonda"
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerStyle: { backgroundColor: "#0b5394" },
@@ -90,34 +79,12 @@ export default function DrawerNavigator() {
       }}
     >
       <Drawer.Screen
-        name="DashboardADM"
-        component={DashboardADM}
+        name="DashboardHonda"
+        component={DashboardHonda}
         options={{
-          title: "Painel Principal",
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" color={color} size={20} />
-          ),
-        }}
-      />
-
-      <Drawer.Screen
-        name="Estoque"
-        component={EstoqueScreen}
-        options={{
-          title: "Controle de Estoque",
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="cube-outline" color={color} size={20} />
-          ),
-        }}
-      />
-
-      <Drawer.Screen
-        name="Ferramentas"
-        component={FerramentasScreen}
-        options={{
-          title: "Ferramentas e Equipamentos",
-          drawerIcon: ({ color, size }) => (
-            <Ionicons name="construct-outline" color={color} size={20} />
+          title: "Painel Honda",
+          drawerIcon: ({ color }) => (
+            <Ionicons name="speedometer-outline" color={color} size={20} />
           ),
         }}
       />
@@ -127,7 +94,7 @@ export default function DrawerNavigator() {
         component={AlmoxarifadoHondaScreen}
         options={{
           title: "Almoxarifado Honda",
-          drawerIcon: ({ color, size }) => (
+          drawerIcon: ({ color }) => (
             <Ionicons name="business-outline" color={color} size={20} />
           ),
         }}
@@ -138,7 +105,7 @@ export default function DrawerNavigator() {
         component={FerramentasHondaScreen}
         options={{
           title: "Ferramentas Honda",
-          drawerIcon: ({ color, size }) => (
+          drawerIcon: ({ color }) => (
             <Ionicons name="build-outline" color={color} size={20} />
           ),
         }}
@@ -147,9 +114,6 @@ export default function DrawerNavigator() {
   );
 }
 
-/* ============================================================
-   🎨 Estilos aprimorados e corrigidos
-============================================================ */
 const styles = StyleSheet.create({
   header: {
     paddingVertical: 40,
