@@ -1,57 +1,79 @@
-// src/screens/DashboardHonda.js
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
-export default function DashboardHonda({ navigation }) {
+export default function DashboardView({ navigation }) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
-        <Text style={styles.headerTitle}>Painel Honda</Text>
-        <Text style={styles.subText}>Visualize e gerencie os estoques</Text>
+      {/* 🔹 Cabeçalho */}
+      <LinearGradient colors={["#06437a", "#0b5394"]} style={styles.header}>
+        <Text style={styles.headerTitle}>Painel de Visualização</Text>
+        <Text style={styles.subText}>Modo somente leitura (Google)</Text>
       </LinearGradient>
 
+      {/* 🔹 Cards de navegação */}
       <View style={styles.grid}>
-        {/* 🔹 Estoque Masters — somente visualização */}
+        {/* Masters */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("EstoqueMasters", { readOnly: true })}
+          onPress={() => navigation.navigate("Estoque", { readOnly: true })}
         >
           <Ionicons name="cube-outline" size={40} color="#0b5394" />
           <Text style={styles.cardText}>Estoque Masters</Text>
           <Text style={styles.subCardText}>(visualização)</Text>
         </TouchableOpacity>
 
-        {/* 🔹 Ferramentas Masters — somente visualização */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("FerramentasMasters", { readOnly: true })}
+          onPress={() => navigation.navigate("Ferramentas", { readOnly: true })}
         >
           <Ionicons name="construct-outline" size={40} color="#0b5394" />
           <Text style={styles.cardText}>Ferramentas Masters</Text>
           <Text style={styles.subCardText}>(visualização)</Text>
         </TouchableOpacity>
 
-        {/* 🔹 Estoque Honda — acesso completo */}
+        {/* Honda */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("EstoqueHonda")}
+          onPress={() => navigation.navigate("EstoqueHonda", { readOnly: true })}
         >
           <Ionicons name="business-outline" size={40} color="#0b5394" />
           <Text style={styles.cardText}>Estoque Honda</Text>
+          <Text style={styles.subCardText}>(visualização)</Text>
         </TouchableOpacity>
 
-        {/* 🔹 Ferramentas Honda — acesso completo */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("FerramentasHonda")}
+          onPress={() => navigation.navigate("FerramentasHonda", { readOnly: true })}
         >
           <Ionicons name="build-outline" size={40} color="#0b5394" />
           <Text style={styles.cardText}>Ferramentas Honda</Text>
+          <Text style={styles.subCardText}>(visualização)</Text>
+        </TouchableOpacity>
+
+        {/* Obras */}
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate("Obras", { readOnly: true })}
+        >
+          <Ionicons name="briefcase-outline" size={40} color="#0b5394" />
+          <Text style={styles.cardText}>Obras e Projetos</Text>
+          <Text style={styles.subCardText}>(visualização)</Text>
+        </TouchableOpacity>
+
+        {/* Equipamentos */}
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate("Equipamentos", { readOnly: true })}
+        >
+          <Ionicons name="settings-outline" size={40} color="#0b5394" />
+          <Text style={styles.cardText}>Equipamentos</Text>
+          <Text style={styles.subCardText}>(visualização)</Text>
         </TouchableOpacity>
       </View>
 
+      {/* 🔹 Logout */}
       <TouchableOpacity
         style={styles.logoutButton}
         onPress={() => navigation.navigate("Login")}

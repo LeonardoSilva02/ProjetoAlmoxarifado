@@ -1,4 +1,3 @@
-// src/screens/EstoqueScreen.js
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -21,7 +20,7 @@ const Tab = createMaterialTopTabNavigator();
 /* -------------------------
    CategoriaTab (com AsyncStorage)
    ------------------------- */
-function CategoriaTab({ categoriaKey, titulo }) {
+function CategoriaTab({ categoriaKey, titulo, readOnly }) {
   const storageKey = `@estoque_${categoriaKey}`;
   const [itens, setItens] = useState([]);
   const [busca, setBusca] = useState("");
@@ -58,6 +57,10 @@ function CategoriaTab({ categoriaKey, titulo }) {
   };
 
   const abrirModalNovo = () => {
+    if (readOnly) {
+      Alert.alert("Acesso somente leitura", "Você não tem permissão para adicionar itens aqui.");
+      return;
+    }
     setEditingItem(null);
     setNome("");
     setQuantidade("");
@@ -66,6 +69,10 @@ function CategoriaTab({ categoriaKey, titulo }) {
   };
 
   const abrirModalEditar = (item) => {
+    if (readOnly) {
+      Alert.alert("Acesso somente leitura", "Você não tem permissão para editar aqui.");
+      return;
+    }
     setEditingItem(item);
     setNome(item.nome);
     setQuantidade(String(item.quantidade));
@@ -102,6 +109,10 @@ function CategoriaTab({ categoriaKey, titulo }) {
   };
 
   const deletar = (item) => {
+    if (readOnly) {
+      Alert.alert("Acesso somente leitura", "Você não tem permissão para excluir aqui.");
+      return;
+    }
     Alert.alert("Excluir item", `Excluir "${item.nome}"?`, [
       { text: "Cancelar", style: "cancel" },
       {
@@ -113,6 +124,10 @@ function CategoriaTab({ categoriaKey, titulo }) {
   };
 
   const alterarQuantidade = (item, delta) => {
+    if (readOnly) {
+      Alert.alert("Acesso somente leitura", "Você não pode alterar quantidades aqui.");
+      return;
+    }
     setItens((prev) =>
       prev.map((it) =>
         it.id === item.id
@@ -147,18 +162,25 @@ function CategoriaTab({ categoriaKey, titulo }) {
         </View>
 
         <View style={styles.cardActions}>
+          {/* ação de alterar quantidade — bloqueada em readOnly */}
           <TouchableOpacity style={styles.iconBtn} onPress={() => alterarQuantidade(item, 1)}>
             <Ionicons name="add-circle" size={28} color="#0b5394" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconBtn} onPress={() => alterarQuantidade(item, -1)}>
             <Ionicons name="remove-circle" size={28} color="#ff4d4d" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => abrirModalEditar(item)}>
-            <Ionicons name="pencil" size={22} color="#0b5394" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => deletar(item)}>
-            <Ionicons name="trash" size={22} color="#777" />
-          </TouchableOpacity>
+
+          {/* editar / deletar — só aparece se não for readOnly */}
+          {!readOnly && (
+            <>
+              <TouchableOpacity style={styles.iconBtn} onPress={() => abrirModalEditar(item)}>
+                <Ionicons name="pencil" size={22} color="#0b5394" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.iconBtn} onPress={() => deletar(item)}>
+                <Ionicons name="trash" size={22} color="#777" />
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
     );
@@ -195,9 +217,12 @@ function CategoriaTab({ categoriaKey, titulo }) {
         />
       )}
 
-      <TouchableOpacity style={styles.fab} onPress={abrirModalNovo}>
-        <Ionicons name="add" size={30} color="#fff" />
-      </TouchableOpacity>
+      {/* FAB escondido em readOnly */}
+      {!readOnly && (
+        <TouchableOpacity style={styles.fab} onPress={abrirModalNovo}>
+          <Ionicons name="add" size={30} color="#fff" />
+        </TouchableOpacity>
+      )}
 
       {/* Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
@@ -257,12 +282,16 @@ function CategoriaTab({ categoriaKey, titulo }) {
 /* -------------------------
    Tela principal
    ------------------------- */
-export default function EstoqueScreen() {
+export default function EstoqueScreen({ route }) {
+  // readOnly vindo de navigation.navigate("Estoque", { readOnly: true })
+  const readOnly = route?.params?.readOnly ?? false;
+
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.header}>
         <Ionicons name="layers" size={22} color="#fff" style={{ marginRight: 8 }} />
         <Text style={styles.headerTitle}>Controle de Estoque</Text>
+        {readOnly && <Text style={{ color: "#fff", marginLeft: 12, fontWeight: "700" }}>(Somente visualização)</Text>}
       </View>
 
       <Tab.Navigator
@@ -280,7 +309,7 @@ export default function EstoqueScreen() {
             tabBarIcon: ({ color }) => <Ionicons name="flash" size={18} color={color} />,
           }}
         >
-          {() => <CategoriaTab categoriaKey="eletrica" titulo="Materiais - Elétrica" />}
+          {() => <CategoriaTab categoriaKey="eletrica" titulo="Materiais - Elétrica" readOnly={readOnly} />}
         </Tab.Screen>
 
         <Tab.Screen
@@ -289,7 +318,7 @@ export default function EstoqueScreen() {
             tabBarIcon: ({ color }) => <Ionicons name="cog" size={18} color={color} />,
           }}
         >
-          {() => <CategoriaTab categoriaKey="mecanica" titulo="Materiais - Mecânica" />}
+          {() => <CategoriaTab categoriaKey="mecanica" titulo="Materiais - Mecânica" readOnly={readOnly} />}
         </Tab.Screen>
 
         <Tab.Screen
@@ -298,7 +327,7 @@ export default function EstoqueScreen() {
             tabBarIcon: ({ color }) => <Ionicons name="color-palette" size={18} color={color} />,
           }}
         >
-          {() => <CategoriaTab categoriaKey="pintura" titulo="Materiais - Pintura" />}
+          {() => <CategoriaTab categoriaKey="pintura" titulo="Materiais - Pintura" readOnly={readOnly} />}
         </Tab.Screen>
 
         <Tab.Screen
@@ -311,6 +340,7 @@ export default function EstoqueScreen() {
             <CategoriaTab
               categoriaKey="porcas_arruelas"
               titulo="Materiais - Porcas, Arruelas e Parafusos"
+              readOnly={readOnly}
             />
           )}
         </Tab.Screen>
@@ -321,16 +351,14 @@ export default function EstoqueScreen() {
             tabBarIcon: ({ color }) => <Ionicons name="construct" size={18} color={color} />,
           }}
         >
-          {() => <CategoriaTab categoriaKey="chumbadores" titulo="Materiais - Chumbadores" />}
+          {() => <CategoriaTab categoriaKey="chumbadores" titulo="Materiais - Chumbadores" readOnly={readOnly} />}
         </Tab.Screen>
       </Tab.Navigator>
     </View>
   );
 }
 
-/* -------------------------
-   Estilos
-   ------------------------- */
+/* ------------------------- ESTILOS (mantive os seus) ------------------------- */
 const styles = StyleSheet.create({
   header: {
     backgroundColor: "#0b5394",

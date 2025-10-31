@@ -1,30 +1,33 @@
+// src/screens/FerramentasHondaScreen.js
 import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
-  StyleSheet,
   FlatList,
   Modal,
-  TextInput,
+  StyleSheet,
   Alert,
+  Platform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
-import { format } from "date-fns";
+import { Picker } from "@react-native-picker/picker";
 
 export default function FerramentasHondaScreen() {
-  const storageKey = "@honda_ferramentas";
   const [ferramentas, setFerramentas] = useState([]);
   const [busca, setBusca] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
 
+  const [editingItem, setEditingItem] = useState(null);
   const [nome, setNome] = useState("");
-  const [marca, setMarca] = useState("");
   const [patrimonio, setPatrimonio] = useState("");
-  const [estado, setEstado] = useState("Bom");
-  const [dataEnvio, setDataEnvio] = useState("");
+  const [situacao, setSituacao] = useState("Funcionando");
+  const [dataManutencao, setDataManutencao] = useState("");
+  const [local, setLocal] = useState("");
+
+  const STORAGE_KEY = "@ferramentas_honda_data";
 
   useEffect(() => {
     carregar();
@@ -36,7 +39,7 @@ export default function FerramentasHondaScreen() {
 
   const carregar = async () => {
     try {
-      const raw = await AsyncStorage.getItem(storageKey);
+      const raw = await AsyncStorage.getItem(STORAGE_KEY);
       if (raw) setFerramentas(JSON.parse(raw));
     } catch (e) {
       console.log("Erro ao carregar ferramentas Honda:", e);
@@ -45,7 +48,7 @@ export default function FerramentasHondaScreen() {
 
   const salvar = async (data) => {
     try {
-      await AsyncStorage.setItem(storageKey, JSON.stringify(data));
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (e) {
       console.log("Erro ao salvar ferramentas Honda:", e);
     }
@@ -54,95 +57,111 @@ export default function FerramentasHondaScreen() {
   const abrirModalNovo = () => {
     setEditingItem(null);
     setNome("");
-    setMarca("");
     setPatrimonio("");
-    setEstado("Bom");
-    setDataEnvio("");
+    setSituacao("Funcionando");
+    setDataManutencao("");
+    setLocal("");
     setModalVisible(true);
   };
 
   const abrirModalEditar = (item) => {
     setEditingItem(item);
     setNome(item.nome);
-    setMarca(item.marca);
     setPatrimonio(item.patrimonio);
-    setEstado(item.estado);
-    setDataEnvio(item.dataEnvio || "");
+    setSituacao(item.situacao);
+    setDataManutencao(item.dataManutencao || "");
+    setLocal(item.local || "");
     setModalVisible(true);
   };
 
   const confirmarSalvar = () => {
-    if (!nome.trim() || !marca.trim() || !patrimonio.trim()) {
-      Alert.alert("Preencha todos os campos obrigatórios!");
+    if (!nome.trim() || !patrimonio.trim() || !situacao || !local.trim()) {
+      Alert.alert("Preencha todos os campos obrigatórios");
       return;
     }
 
-    const novaFerramenta = {
+    if (situacao === "Em manutenção" && !dataManutencao.trim()) {
+      Alert.alert("Informe a data de envio para manutenção");
+      return;
+    }
+
+    const novoItem = {
       id: editingItem ? editingItem.id : Date.now().toString(),
       nome: nome.trim(),
-      marca: marca.trim(),
       patrimonio: patrimonio.trim(),
-      estado,
-      dataEnvio: estado === "Em manutenção" ? dataEnvio || new Date().toISOString() : "",
-      criadaEm: editingItem ? editingItem.criadaEm : new Date().toISOString(),
+      situacao,
+      dataManutencao: situacao === "Em manutenção" ? dataManutencao.trim() : "",
+      local: local.trim(),
     };
 
     if (editingItem) {
       setFerramentas((prev) =>
-        prev.map((f) => (f.id === editingItem.id ? novaFerramenta : f))
+        prev.map((i) => (i.id === editingItem.id ? novoItem : i))
       );
     } else {
-      setFerramentas([novaFerramenta, ...ferramentas]);
+      setFerramentas([novoItem, ...ferramentas]);
     }
 
     setModalVisible(false);
   };
 
   const deletar = (item) => {
-    Alert.alert("Excluir", `Excluir a ferramenta "${item.nome}"?`, [
+    Alert.alert("Excluir ferramenta", `Excluir "${item.nome}"?`, [
       { text: "Cancelar", style: "cancel" },
-      { text: "Excluir", style: "destructive", onPress: () => setFerramentas((prev) => prev.filter((f) => f.id !== item.id)) },
+      {
+        text: "Excluir",
+        style: "destructive",
+        onPress: () => {
+          setFerramentas((prev) => prev.filter((i) => i.id !== item.id));
+        },
+      },
     ]);
   };
 
-  const getEstadoColor = (estado) => {
-    switch (estado) {
-      case "Bom":
+  const getColorByStatus = (status) => {
+    switch (status) {
+      case "Funcionando":
         return "#4cd137";
       case "Com defeito":
-        return "#e1b12c";
+        return "#fbc531";
       case "Em manutenção":
-        return "#e84118";
+        return "#ff4d4d";
       default:
-        return "#ccc";
+        return "#777";
     }
   };
 
-  const ferramentasFiltradas = ferramentas.filter((f) =>
-    f.nome.toLowerCase().includes(busca.toLowerCase())
+  const itensFiltrados = ferramentas.filter((it) =>
+    it.nome.toLowerCase().includes(busca.toLowerCase())
   );
 
   const renderItem = ({ item }) => {
-    const cor = getEstadoColor(item.estado);
+    const color = getColorByStatus(item.situacao);
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, { borderLeftColor: color, borderLeftWidth: 5 }]}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.itemNome}>{item.nome}</Text>
-          <Text style={styles.itemInfo}>Marca: {item.marca}</Text>
-          <Text style={styles.itemInfo}>Patrimônio: {item.patrimonio}</Text>
-          <Text style={[styles.itemEstado, { color: cor }]}>Estado: {item.estado}</Text>
-          {item.estado === "Em manutenção" && (
-            <Text style={styles.itemInfo}>
-              Enviado: {item.dataEnvio ? format(new Date(item.dataEnvio), "dd/MM/yyyy") : "—"}
+          <Text style={styles.nome}>{item.nome}</Text>
+          <Text style={styles.meta}>Patrimônio: {item.patrimonio}</Text>
+          <Text style={styles.meta}>Local: {item.local}</Text>
+          <Text style={[styles.situacao, { color }]}>{item.situacao}</Text>
+          {item.situacao === "Em manutenção" && (
+            <Text style={styles.meta}>
+              🧰 Enviado em: {item.dataManutencao || "-"}
             </Text>
           )}
         </View>
-        <View style={styles.actions}>
+
+        <View style={styles.cardActions}>
           <TouchableOpacity onPress={() => abrirModalEditar(item)}>
             <Ionicons name="pencil" size={22} color="#0b5394" />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => deletar(item)}>
-            <Ionicons name="trash" size={22} color="#777" />
+            <Ionicons
+              name="trash-outline"
+              size={22}
+              color="#777"
+              style={{ marginLeft: 10 }}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -152,7 +171,7 @@ export default function FerramentasHondaScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Ionicons name="construct" size={22} color="#fff" style={{ marginRight: 6 }} />
+        <Ionicons name="construct" size={22} color="#fff" style={{ marginRight: 8 }} />
         <Text style={styles.headerTitle}>Ferramentas Honda</Text>
       </View>
 
@@ -161,22 +180,24 @@ export default function FerramentasHondaScreen() {
         <TextInput
           placeholder="Buscar ferramenta..."
           placeholderTextColor="#999"
-          style={styles.searchInput}
           value={busca}
           onChangeText={setBusca}
+          style={styles.searchInput}
         />
       </View>
 
-      {ferramentasFiltradas.length === 0 ? (
+      {itensFiltrados.length === 0 ? (
         <View style={styles.emptyWrap}>
-          <Text style={styles.emptyText}>Nenhuma ferramenta cadastrada.</Text>
+          <Text style={styles.emptyText}>
+            {busca ? "Nenhum item encontrado." : "Nenhuma ferramenta cadastrada."}
+          </Text>
         </View>
       ) : (
         <FlatList
-          data={ferramentasFiltradas}
+          data={itensFiltrados}
           keyExtractor={(i) => i.id}
           renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: 120 }}
+          contentContainerStyle={{ paddingBottom: 100 }}
         />
       )}
 
@@ -184,7 +205,7 @@ export default function FerramentasHondaScreen() {
         <Ionicons name="add" size={30} color="#fff" />
       </TouchableOpacity>
 
-      {/* Modal */}
+      {/* MODAL */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -194,39 +215,48 @@ export default function FerramentasHondaScreen() {
 
             <TextInput
               style={styles.modalInput}
-              placeholder="Nome"
+              placeholder="Nome da ferramenta"
+              placeholderTextColor="#999"
               value={nome}
               onChangeText={setNome}
-              placeholderTextColor="#999"
             />
+
             <TextInput
               style={styles.modalInput}
-              placeholder="Marca"
-              value={marca}
-              onChangeText={setMarca}
+              placeholder="Número de patrimônio"
               placeholderTextColor="#999"
-            />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Patrimônio"
               value={patrimonio}
               onChangeText={setPatrimonio}
-              placeholderTextColor="#999"
             />
+
             <TextInput
               style={styles.modalInput}
-              placeholder="Estado (Bom, Com defeito, Em manutenção)"
-              value={estado}
-              onChangeText={setEstado}
+              placeholder="Local (Ex: Honda, BIC, Masters...)"
               placeholderTextColor="#999"
+              value={local}
+              onChangeText={setLocal}
             />
-            {estado === "Em manutenção" && (
+
+            <View style={styles.pickerWrap}>
+              <Text style={styles.label}>Situação:</Text>
+              <Picker
+                selectedValue={situacao}
+                style={{ flex: 1 }}
+                onValueChange={(val) => setSituacao(val)}
+              >
+                <Picker.Item label="Funcionando" value="Funcionando" />
+                <Picker.Item label="Com defeito" value="Com defeito" />
+                <Picker.Item label="Em manutenção" value="Em manutenção" />
+              </Picker>
+            </View>
+
+            {situacao === "Em manutenção" && (
               <TextInput
                 style={styles.modalInput}
-                placeholder="Data de envio (opcional)"
-                value={dataEnvio}
-                onChangeText={setDataEnvio}
+                placeholder="Data de envio (ex: 29/10/2025)"
                 placeholderTextColor="#999"
+                value={dataManutencao}
+                onChangeText={setDataManutencao}
               />
             )}
 
@@ -254,96 +284,89 @@ export default function FerramentasHondaScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9f9f9" },
+  container: { flex: 1, backgroundColor: "#f5f7fb", padding: 12 },
   header: {
+    backgroundColor: "#0b5394",
+    paddingTop: Platform.OS === "ios" ? 50 : 25,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#0b5394",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    elevation: 6,
   },
   headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold" },
   searchRow: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    borderRadius: 12,
-    margin: 12,
     paddingHorizontal: 10,
-    elevation: 1,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#e6eaf5",
+    marginTop: 12,
+    marginBottom: 8,
   },
-  searchInput: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    fontSize: 15,
-    color: "#333",
-  },
+  searchInput: { marginLeft: 8, flex: 1, height: 40, color: "#333" },
   card: {
     flexDirection: "row",
-    justifyContent: "space-between",
     backgroundColor: "#fff",
-    marginHorizontal: 12,
-    marginVertical: 6,
-    padding: 14,
     borderRadius: 12,
-    elevation: 2,
+    padding: 14,
+    marginBottom: 10,
+    elevation: 3,
   },
-  itemNome: { fontWeight: "bold", fontSize: 16, marginBottom: 4 },
-  itemInfo: { color: "#555", fontSize: 14 },
-  itemEstado: { fontWeight: "bold", fontSize: 14, marginTop: 2 },
-  actions: { justifyContent: "space-around", alignItems: "center" },
-  emptyWrap: { alignItems: "center", marginTop: 40 },
+  nome: { fontSize: 16, fontWeight: "700", color: "#222", marginBottom: 4 },
+  meta: { color: "#555", fontSize: 13 },
+  situacao: { fontWeight: "bold", marginTop: 4 },
+  cardActions: { flexDirection: "row", alignItems: "center", marginLeft: 12 },
+  emptyWrap: { flex: 1, alignItems: "center", justifyContent: "center" },
   emptyText: { color: "#777" },
   fab: {
     position: "absolute",
-    bottom: 20,
-    right: 20,
+    right: 18,
+    bottom: 22,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     backgroundColor: "#0b5394",
-    width: 56,
-    height: 56,
-    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-    elevation: 4,
+    elevation: 8,
   },
   modalOverlay: {
     flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
     justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    padding: 20,
-  },
-  modalCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#0b5394",
-    marginBottom: 14,
-    textAlign: "center",
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 10,
-    fontSize: 15,
-  },
-  modalActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-  modalBtn: {
-    flex: 1,
-    marginHorizontal: 5,
-    paddingVertical: 10,
-    borderRadius: 10,
     alignItems: "center",
   },
+  modalCard: {
+    width: "88%",
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    padding: 18,
+    elevation: 12,
+  },
+  modalTitle: { fontSize: 18, fontWeight: "800", color: "#0b5394", marginBottom: 12 },
+  modalInput: {
+    backgroundColor: "#f3f6ff",
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#e6eaf5",
+    color: "#333",
+  },
+  pickerWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f3f6ff",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#e6eaf5",
+    paddingHorizontal: 8,
+    marginBottom: 10,
+  },
+  label: { color: "#333", fontWeight: "700", marginRight: 8 },
+  modalActions: { flexDirection: "row", justifyContent: "space-between", marginTop: 6 },
+  modalBtn: { flex: 1, padding: 12, borderRadius: 10, alignItems: "center", marginHorizontal: 6 },
 });

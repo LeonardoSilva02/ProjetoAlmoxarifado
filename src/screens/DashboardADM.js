@@ -1,23 +1,51 @@
 // src/screens/DashboardADM.js
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function DashboardADM({ navigation }) {
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
+
+  useEffect(() => {
+    // 🔹 Verifica se o login foi feito com Google
+    const checkLoginType = async () => {
+      const loginType = await AsyncStorage.getItem("loginType");
+      if (loginType === "google") {
+        setIsGoogleUser(true);
+      }
+    };
+    checkLoginType();
+  }, []);
+
+  const handleRestrictedAction = () => {
+    Alert.alert("Acesso restrito", "Você só pode visualizar as informações.");
+  };
+
+  const handleNavigation = (screen) => {
+    if (isGoogleUser) {
+      // ✅ Pode navegar, mas apenas visualizar
+      navigation.navigate(screen, { readOnly: true });
+    } else {
+      // 🔧 ADM normal
+      navigation.navigate(screen);
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* 🔹 Cabeçalho com gradiente azul */}
       <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
         <Text style={styles.headerTitle}>Painel Administrativo</Text>
-        <Text style={styles.subText}>Gerencie os setores da empresa</Text>
+        <Text style={styles.subText}>
+          {isGoogleUser ? "Modo de visualização" : "Gerencie os setores da empresa"}
+        </Text>
       </LinearGradient>
 
-      {/* 🔹 Cards principais */}
       <View style={styles.grid}>
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("Estoque")}
+          onPress={() => handleNavigation("Estoque")}
         >
           <Ionicons name="cube-outline" size={40} color="#0b5394" />
           <Text style={styles.cardText}>Controle de Estoque</Text>
@@ -25,16 +53,15 @@ export default function DashboardADM({ navigation }) {
 
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("Ferramentas")}
+          onPress={() => handleNavigation("Ferramentas")}
         >
           <Ionicons name="construct-outline" size={40} color="#0b5394" />
           <Text style={styles.cardText}>Ferramentas e Equipamentos</Text>
         </TouchableOpacity>
 
-        {/* 🔹 Estoque Honda (renomeado) */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("EstoqueHonda")}
+          onPress={() => handleNavigation("EstoqueHonda")}
         >
           <Ionicons name="business-outline" size={40} color="#0b5394" />
           <Text style={styles.cardText}>Estoque Honda</Text>
@@ -42,14 +69,13 @@ export default function DashboardADM({ navigation }) {
 
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("FerramentasHonda")}
+          onPress={() => handleNavigation("FerramentasHonda")}
         >
           <Ionicons name="build-outline" size={40} color="#0b5394" />
           <Text style={styles.cardText}>Ferramentas Honda</Text>
         </TouchableOpacity>
       </View>
 
-      {/* 🔹 Botão de Logout */}
       <TouchableOpacity
         style={styles.logoutButton}
         onPress={() => navigation.navigate("Login")}
@@ -61,9 +87,6 @@ export default function DashboardADM({ navigation }) {
   );
 }
 
-/* ============================================================
-   🎨 Estilos
-============================================================ */
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,

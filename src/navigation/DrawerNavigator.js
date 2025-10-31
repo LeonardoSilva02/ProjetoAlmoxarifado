@@ -14,7 +14,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import DashboardADM from "../screens/DashboardADM";
 import EstoqueScreen from "../screens/EstoqueScreen";
 import FerramentasScreen from "../screens/FerramentasScreen";
-import AlmoxarifadoHondaScreen from "../screens/AlmoxarifadoHondaScreen";
+import EstoqueHondaScreen from "../screens/EstoqueHondaScreen"; // ✅ renomeado corretamente
 import FerramentasHondaScreen from "../screens/FerramentasHondaScreen";
 
 const Drawer = createDrawerNavigator();
@@ -37,7 +37,7 @@ function CustomDrawerContent(props) {
         <Text style={styles.userEmail}>adm@empresa.com</Text>
       </LinearGradient>
 
-      {/* Itens do Drawer (ajustados para clique correto) */}
+      {/* Itens do Drawer */}
       <View style={styles.drawerItems}>
         <DrawerItemList {...props} />
       </View>
@@ -94,7 +94,7 @@ export default function DrawerNavigator() {
         component={DashboardADM}
         options={{
           title: "Painel Principal",
-          drawerIcon: ({ color, size }) => (
+          drawerIcon: ({ color }) => (
             <Ionicons name="home-outline" color={color} size={20} />
           ),
         }}
@@ -105,7 +105,7 @@ export default function DrawerNavigator() {
         component={EstoqueScreen}
         options={{
           title: "Controle de Estoque",
-          drawerIcon: ({ color, size }) => (
+          drawerIcon: ({ color }) => (
             <Ionicons name="cube-outline" color={color} size={20} />
           ),
         }}
@@ -116,18 +116,19 @@ export default function DrawerNavigator() {
         component={FerramentasScreen}
         options={{
           title: "Ferramentas e Equipamentos",
-          drawerIcon: ({ color, size }) => (
+          drawerIcon: ({ color }) => (
             <Ionicons name="construct-outline" color={color} size={20} />
           ),
         }}
       />
 
+      {/* 🔹 Corrigido: agora a rota se chama “EstoqueHonda” */}
       <Drawer.Screen
-        name="AlmoxarifadoHonda"
-        component={AlmoxarifadoHondaScreen}
+        name="EstoqueHonda"
+        component={EstoqueHondaScreen}
         options={{
-          title: "Almoxarifado Honda",
-          drawerIcon: ({ color, size }) => (
+          title: "Estoque Honda",
+          drawerIcon: ({ color }) => (
             <Ionicons name="business-outline" color={color} size={20} />
           ),
         }}
@@ -138,7 +139,7 @@ export default function DrawerNavigator() {
         component={FerramentasHondaScreen}
         options={{
           title: "Ferramentas Honda",
-          drawerIcon: ({ color, size }) => (
+          drawerIcon: ({ color }) => (
             <Ionicons name="build-outline" color={color} size={20} />
           ),
         }}
@@ -148,7 +149,7 @@ export default function DrawerNavigator() {
 }
 
 /* ============================================================
-   🎨 Estilos aprimorados e corrigidos
+   🎨 Estilos aprimorados
 ============================================================ */
 const styles = StyleSheet.create({
   header: {

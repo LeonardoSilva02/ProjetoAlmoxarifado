@@ -14,7 +14,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 
-export default function FerramentasScreen() {
+export default function FerramentasScreen({ route }) {
+  const readOnly = route?.params?.readOnly ?? false;
+
   const [ferramentas, setFerramentas] = useState([]);
   const [busca, setBusca] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
@@ -24,7 +26,7 @@ export default function FerramentasScreen() {
   const [patrimonio, setPatrimonio] = useState("");
   const [situacao, setSituacao] = useState("Funcionando");
   const [dataManutencao, setDataManutencao] = useState("");
-  const [local, setLocal] = useState(""); // 🔹 Novo campo
+  const [local, setLocal] = useState(""); // Novo campo
 
   const STORAGE_KEY = "@ferramentas_data";
 
@@ -54,6 +56,10 @@ export default function FerramentasScreen() {
   };
 
   const abrirModalNovo = () => {
+    if (readOnly) {
+      Alert.alert("Acesso somente leitura", "Você não tem permissão para adicionar aqui.");
+      return;
+    }
     setEditingItem(null);
     setNome("");
     setPatrimonio("");
@@ -64,6 +70,10 @@ export default function FerramentasScreen() {
   };
 
   const abrirModalEditar = (item) => {
+    if (readOnly) {
+      Alert.alert("Acesso somente leitura", "Você não tem permissão para editar aqui.");
+      return;
+    }
     setEditingItem(item);
     setNome(item.nome);
     setPatrimonio(item.patrimonio);
@@ -94,9 +104,7 @@ export default function FerramentasScreen() {
     };
 
     if (editingItem) {
-      setFerramentas((prev) =>
-        prev.map((i) => (i.id === editingItem.id ? novoItem : i))
-      );
+      setFerramentas((prev) => prev.map((i) => (i.id === editingItem.id ? novoItem : i)));
     } else {
       setFerramentas([novoItem, ...ferramentas]);
     }
@@ -105,6 +113,10 @@ export default function FerramentasScreen() {
   };
 
   const deletar = (item) => {
+    if (readOnly) {
+      Alert.alert("Acesso somente leitura", "Você não tem permissão para excluir aqui.");
+      return;
+    }
     Alert.alert("Excluir ferramenta", `Excluir "${item.nome}"?`, [
       { text: "Cancelar", style: "cancel" },
       {
@@ -120,11 +132,11 @@ export default function FerramentasScreen() {
   const getColorByStatus = (status) => {
     switch (status) {
       case "Funcionando":
-        return "#4cd137"; // verde
+        return "#4cd137";
       case "Com defeito":
-        return "#fbc531"; // amarelo
+        return "#fbc531";
       case "Em manutenção":
-        return "#ff4d4d"; // vermelho
+        return "#ff4d4d";
       default:
         return "#777";
     }
@@ -144,24 +156,22 @@ export default function FerramentasScreen() {
           <Text style={styles.meta}>Local: {item.local}</Text>
           <Text style={[styles.situacao, { color }]}>{item.situacao}</Text>
           {item.situacao === "Em manutenção" && (
-            <Text style={styles.meta}>
-              🧰 Enviado em: {item.dataManutencao || "-"}
-            </Text>
+            <Text style={styles.meta}>🧰 Enviado em: {item.dataManutencao || "-"}</Text>
           )}
         </View>
 
         <View style={styles.cardActions}>
-          <TouchableOpacity onPress={() => abrirModalEditar(item)}>
-            <Ionicons name="pencil" size={22} color="#0b5394" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => deletar(item)}>
-            <Ionicons
-              name="trash-outline"
-              size={22}
-              color="#777"
-              style={{ marginLeft: 10 }}
-            />
-          </TouchableOpacity>
+          {/* editar / excluir: escondidos em readOnly */}
+          {!readOnly && (
+            <>
+              <TouchableOpacity onPress={() => abrirModalEditar(item)}>
+                <Ionicons name="pencil" size={22} color="#0b5394" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => deletar(item)} style={{ marginLeft: 10 }}>
+                <Ionicons name="trash-outline" size={22} color="#777" />
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
     );
@@ -172,6 +182,7 @@ export default function FerramentasScreen() {
       <View style={styles.header}>
         <Ionicons name="construct" size={22} color="#fff" style={{ marginRight: 8 }} />
         <Text style={styles.headerTitle}>Ferramentas e Equipamentos</Text>
+        {readOnly && <Text style={{ color: "#fff", marginLeft: 10, fontWeight: "700" }}>(Somente visualização)</Text>}
       </View>
 
       <View style={styles.searchRow}>
@@ -200,9 +211,12 @@ export default function FerramentasScreen() {
         />
       )}
 
-      <TouchableOpacity style={styles.fab} onPress={abrirModalNovo}>
-        <Ionicons name="add" size={30} color="#fff" />
-      </TouchableOpacity>
+      {/* FAB escondido em readOnly */}
+      {!readOnly && (
+        <TouchableOpacity style={styles.fab} onPress={abrirModalNovo}>
+          <Ionicons name="add" size={30} color="#fff" />
+        </TouchableOpacity>
+      )}
 
       {/* MODAL */}
       <Modal visible={modalVisible} animationType="slide" transparent>
@@ -238,11 +252,7 @@ export default function FerramentasScreen() {
 
             <View style={styles.pickerWrap}>
               <Text style={styles.label}>Situação:</Text>
-              <Picker
-                selectedValue={situacao}
-                style={{ flex: 1 }}
-                onValueChange={(val) => setSituacao(val)}
-              >
+              <Picker selectedValue={situacao} style={{ flex: 1 }} onValueChange={(val) => setSituacao(val)}>
                 <Picker.Item label="Funcionando" value="Funcionando" />
                 <Picker.Item label="Com defeito" value="Com defeito" />
                 <Picker.Item label="Em manutenção" value="Em manutenção" />
@@ -260,19 +270,11 @@ export default function FerramentasScreen() {
             )}
 
             <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: "#ccc" }]}
-                onPress={() => setModalVisible(false)}
-              >
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: "#ccc" }]} onPress={() => setModalVisible(false)}>
                 <Text style={{ color: "#333", fontWeight: "700" }}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: "#0b5394" }]}
-                onPress={confirmarSalvar}
-              >
-                <Text style={{ color: "#fff", fontWeight: "700" }}>
-                  {editingItem ? "Salvar" : "Adicionar"}
-                </Text>
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: "#0b5394" }]} onPress={confirmarSalvar}>
+                <Text style={{ color: "#fff", fontWeight: "700" }}>{editingItem ? "Salvar" : "Adicionar"}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -282,6 +284,7 @@ export default function FerramentasScreen() {
   );
 }
 
+/* =================== estilos (mantive os seus) =================== */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f7fb", padding: 12 },
   header: {
