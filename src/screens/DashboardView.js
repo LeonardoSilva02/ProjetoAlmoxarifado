@@ -4,6 +4,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
 export default function DashboardView({ navigation }) {
+  // 🔹 Função de logout segura
+  const handleLogout = () => {
+    // Se estiver usando AsyncStorage para salvar login:
+    // await AsyncStorage.removeItem("userData");
+
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Login" }],
+    });
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* 🔹 Cabeçalho */}
@@ -51,33 +62,10 @@ export default function DashboardView({ navigation }) {
           <Text style={styles.cardText}>Ferramentas Honda</Text>
           <Text style={styles.subCardText}>(visualização)</Text>
         </TouchableOpacity>
-
-        {/* Obras */}
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate("Obras", { readOnly: true })}
-        >
-          <Ionicons name="briefcase-outline" size={40} color="#0b5394" />
-          <Text style={styles.cardText}>Obras e Projetos</Text>
-          <Text style={styles.subCardText}>(visualização)</Text>
-        </TouchableOpacity>
-
-        {/* Equipamentos */}
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate("Equipamentos", { readOnly: true })}
-        >
-          <Ionicons name="settings-outline" size={40} color="#0b5394" />
-          <Text style={styles.cardText}>Equipamentos</Text>
-          <Text style={styles.subCardText}>(visualização)</Text>
-        </TouchableOpacity>
       </View>
 
       {/* 🔹 Logout */}
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={() => navigation.navigate("Login")}
-      >
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Ionicons name="exit-outline" size={22} color="#fff" />
         <Text style={styles.logoutText}>Sair</Text>
       </TouchableOpacity>
