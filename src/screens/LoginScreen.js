@@ -26,7 +26,7 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const currentYear = new Date().getFullYear();
 
-  // ✅ Configuração do login com Google
+  // 🔹 Configuração do login Google
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId:
       "1018177453189-cosma8rk2fo4m6ge2jsdk4g6mcucnkuh.apps.googleusercontent.com",
@@ -36,48 +36,75 @@ export default function LoginScreen({ navigation }) {
       "1018177453189-cosma8rk2fo4m6ge2jsdk4g6mcucnkuh.apps.googleusercontent.com",
   });
 
-  // ✅ Quando login via Google for bem-sucedido
+  // 🔹 Quando login via Google for bem-sucedido
   useEffect(() => {
-    if (response?.type === "success") {
-      const { authentication } = response;
-      if (authentication?.accessToken) {
-        fetch("https://www.googleapis.com/userinfo/v2/me", {
-          headers: { Authorization: `Bearer ${authentication.accessToken}` },
-        })
-          .then((res) => res.json())
-          .then(async (userInfo) => {
-            await AsyncStorage.setItem("userRole", "viewer");
-            await AsyncStorage.setItem("loginType", "google");
-            await AsyncStorage.setItem("userName", userInfo.name || "Usuário");
-            navigation.replace("DashboardView", { readOnly: true });
-          })
-          .catch(() => {
-            Alert.alert("Erro", "Falha ao obter dados da conta Google.");
+    const handleGoogleLogin = async () => {
+      if (response?.type === "success") {
+        const { authentication } = response;
+
+        if (!authentication?.accessToken) {
+          Alert.alert("Erro", "Não foi possível obter o token do Google. Tente novamente.");
+          return;
+        }
+
+        try {
+          const res = await fetch("https://www.googleapis.com/userinfo/v2/me", {
+            headers: { Authorization: `Bearer ${authentication.accessToken}` },
           });
+
+          const userInfo = await res.json();
+
+          await AsyncStorage.setItem("userRole", "viewer");
+          await AsyncStorage.setItem("loginType", "google");
+          await AsyncStorage.setItem("userName", userInfo.name || "Usuário Google");
+
+          Alert.alert("Sucesso", `Bem-vindo(a), ${userInfo.name || "usuário"}!`);
+
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "DrawerNavigatorView" }],
+          });
+        } catch (error) {
+          console.error("Erro ao obter dados do Google:", error);
+          Alert.alert("Erro", "Falha ao autenticar com o Google.");
+        }
       }
-    }
+    };
+
+    handleGoogleLogin();
   }, [response]);
 
-  // ✅ Login manual (ADM e Honda)
+  // 🔹 Login manual (ADM e Honda)
   const handleLogin = async () => {
-    if (username === "adm" && password === "123") {
-      await AsyncStorage.setItem("userRole", "admin");
-      await AsyncStorage.setItem("loginType", "manual");
-      navigation.replace("DrawerNavigator");
-    } else if (username === "admHonda" && password === "123") {
-      await AsyncStorage.setItem("userRole", "admin");
-      await AsyncStorage.setItem("loginType", "manual");
-      navigation.replace("DrawerNavigatorHonda");
-    } else {
-      Alert.alert("Erro", "Usuário ou senha incorretos ❌");
+    try {
+      if (username === "adm" && password === "123") {
+        await AsyncStorage.setItem("userRole", "admin");
+        await AsyncStorage.setItem("loginType", "manual");
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "DrawerNavigator" }],
+        });
+      } else if (username === "admHonda" && password === "123") {
+        await AsyncStorage.setItem("userRole", "adminHonda");
+        await AsyncStorage.setItem("loginType", "manual");
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "DrawerNavigatorHonda" }],
+        });
+      } else {
+        Alert.alert("Erro", "Usuário ou senha incorretos ❌");
+      }
+    } catch (error) {
+      console.log("Erro no login:", error);
     }
   };
 
-  // ✅ Animações
+  // 🔹 Animações
   const fadeLogo = useRef(new Animated.Value(0)).current;
   const fadeContent = useRef(new Animated.Value(0)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
   const googleScale = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
   const gradientAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -85,6 +112,23 @@ export default function LoginScreen({ navigation }) {
       Animated.timing(fadeLogo, { toValue: 1, duration: 1500, useNativeDriver: true }),
       Animated.timing(fadeContent, { toValue: 1, duration: 1000, useNativeDriver: true }),
     ]).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, {
+          toValue: 1,
+          duration: 2000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+        Animated.timing(glowAnim, {
+          toValue: 0,
+          duration: 2000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+      ])
+    ).start();
 
     Animated.loop(
       Animated.sequence([
@@ -104,26 +148,10 @@ export default function LoginScreen({ navigation }) {
     ).start();
   }, []);
 
-  // ✅ Animação dos botões
-  const handlePressIn = () =>
-    Animated.spring(buttonScale, { toValue: 0.96, useNativeDriver: true }).start();
-  const handlePressOut = () =>
-    Animated.spring(buttonScale, {
-      toValue: 1,
-      friction: 3,
-      tension: 80,
-      useNativeDriver: true,
-    }).start();
-
-  const handleGooglePressIn = () =>
-    Animated.spring(googleScale, { toValue: 0.96, useNativeDriver: true }).start();
-  const handleGooglePressOut = () =>
-    Animated.spring(googleScale, {
-      toValue: 1,
-      friction: 3,
-      tension: 80,
-      useNativeDriver: true,
-    }).start();
+  const glowOpacity = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.2, 0.6],
+  });
 
   const bg1 = gradientAnim.interpolate({
     inputRange: [0, 1],
@@ -143,18 +171,18 @@ export default function LoginScreen({ navigation }) {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.inner}
       >
+        {/* 🔹 LOGO MELHORADA */}
         <Animated.View style={[styles.logoContainer, { opacity: fadeLogo }]}>
-          <View style={styles.logoWrapper}>
-            <Image
-              source={require("../../assets/logo-masters.jpg")}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            <View style={styles.logoGlow} />
-          </View>
+          <Animated.View style={[styles.glow, { opacity: glowOpacity }]} />
+          <Image
+            source={require("../../assets/logo-masters.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.appName}>Sistema de Almoxarifado</Text>
         </Animated.View>
 
+        {/* 🔹 FORMULÁRIO */}
         <Animated.View style={[styles.card, { opacity: fadeContent }]}>
           <Text style={styles.title}>Bem-vindo 👋</Text>
           <Text style={styles.subtitle}>Acesse com suas credenciais</Text>
@@ -183,11 +211,19 @@ export default function LoginScreen({ navigation }) {
             />
           </View>
 
-          {/* 🔹 Botão principal */}
           <Animated.View style={{ transform: [{ scale: buttonScale }], width: "100%" }}>
             <TouchableOpacity
-              onPressIn={handlePressIn}
-              onPressOut={handlePressOut}
+              onPressIn={() =>
+                Animated.spring(buttonScale, { toValue: 0.96, useNativeDriver: true }).start()
+              }
+              onPressOut={() =>
+                Animated.spring(buttonScale, {
+                  toValue: 1,
+                  friction: 3,
+                  tension: 80,
+                  useNativeDriver: true,
+                }).start()
+              }
               onPress={handleLogin}
               activeOpacity={0.8}
             >
@@ -198,11 +234,19 @@ export default function LoginScreen({ navigation }) {
             </TouchableOpacity>
           </Animated.View>
 
-          {/* 🔹 Botão Google */}
           <Animated.View style={{ transform: [{ scale: googleScale }], width: "100%" }}>
             <TouchableOpacity
-              onPressIn={handleGooglePressIn}
-              onPressOut={handleGooglePressOut}
+              onPressIn={() =>
+                Animated.spring(googleScale, { toValue: 0.96, useNativeDriver: true }).start()
+              }
+              onPressOut={() =>
+                Animated.spring(googleScale, {
+                  toValue: 1,
+                  friction: 3,
+                  tension: 80,
+                  useNativeDriver: true,
+                }).start()
+              }
               style={styles.googleButton}
               onPress={() => promptAsync()}
               disabled={!request}
@@ -236,25 +280,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 25,
   },
-  logoContainer: { alignItems: "center", marginBottom: 30 },
-  logoWrapper: { position: "relative", alignItems: "center" },
-  logo: {
-    width: 130,
-    height: 80,
-    borderRadius: 15,
-    borderWidth: 2,
-    borderColor: "#ffffffaa",
-    shadowColor: "#fff",
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
-    elevation: 6,
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 30,
+    position: "relative",
   },
-  logoGlow: {
+  glow: {
     position: "absolute",
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: "#ffffff40",
+    shadowColor: "#fff",
+    shadowOpacity: 0.8,
+    shadowRadius: 25,
+    elevation: 12,
+  },
+  logo: {
     width: 140,
     height: 90,
-    borderRadius: 20,
-    backgroundColor: "#ffffff20",
+    borderRadius: 18,
+    zIndex: 2,
   },
   appName: {
     fontSize: 17,

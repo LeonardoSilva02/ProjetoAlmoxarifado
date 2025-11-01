@@ -5,6 +5,12 @@ import { createStackNavigator } from "@react-navigation/stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ActivityIndicator, View, Text } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { LogBox } from "react-native";
+
+// 🔹 Ignora alguns avisos não críticos do Expo/React Navigation
+LogBox.ignoreLogs([
+  "Non-serializable values were found in the navigation state",
+]);
 
 // 🔹 Telas / Navegações
 import LoginScreen from "./src/screens/LoginScreen";
@@ -17,28 +23,36 @@ const Stack = createStackNavigator();
 export default function App() {
   const [initialRoute, setInitialRoute] = useState(null);
 
-  useEffect(() => {
-    const checkLogin = async () => {
-      try {
-        // 🔹 Lê o tipo de usuário salvo no AsyncStorage
-        const userRole = await AsyncStorage.getItem("userRole");
+  // 🔹 Verifica login salvo
+  const checkLogin = async () => {
+    try {
+      const userRole = await AsyncStorage.getItem("userRole");
 
-        if (userRole === "admin") {
-          setInitialRoute("DrawerNavigator");
-        } else if (userRole === "adminHonda") {
-          setInitialRoute("DrawerNavigatorHonda");
-        } else if (userRole === "viewer") {
-          setInitialRoute("DrawerNavigatorView");
-        } else {
-          setInitialRoute("Login");
-        }
-      } catch (error) {
-        console.log("Erro ao carregar userRole:", error);
+      if (userRole === "admin") {
+        setInitialRoute("DrawerNavigator");
+      } else if (userRole === "adminHonda") {
+        setInitialRoute("DrawerNavigatorHonda");
+      } else if (userRole === "viewer") {
+        setInitialRoute("DrawerNavigatorView");
+      } else {
         setInitialRoute("Login");
       }
+    } catch (error) {
+      console.log("Erro ao carregar userRole:", error);
+      setInitialRoute("Login");
+    }
+  };
+
+  useEffect(() => {
+    checkLogin();
+
+    // 🔹 Adiciona listener global para quando o usuário logar ou sair
+    const loginListener = async () => {
+      await checkLogin();
     };
 
-    checkLogin();
+    // 🔹 Armazena função global pra forçar rechecagem após login/logout
+    global.refreshLoginState = loginListener;
   }, []);
 
   // 🔹 Tela de carregamento enquanto verifica login
@@ -62,7 +76,7 @@ export default function App() {
     <NavigationContainer>
       <StatusBar style="light" backgroundColor="#0b5394" />
       <Stack.Navigator
-        initialRouteName="Login" // 🔹 Sempre inicia pelo Login
+        initialRouteName={initialRoute}
         screenOptions={{
           headerShown: false,
           gestureEnabled: false,
