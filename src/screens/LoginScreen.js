@@ -27,17 +27,16 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const currentYear = new Date().getFullYear();
 
-  // ✅ Configuração do Google Login
+  // ✅ Login Google
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId:
-      "1018177453189-cosma8rk2fo4m6ge2jsdk4g6mcucnkuh.apps.googleusercontent.com",
-    iosClientId:
-      "1018177453189-cosma8rk2fo4m6ge2jsdk4g6mcucnkuh.apps.googleusercontent.com",
-    webClientId:
-      "1018177453189-cosma8rk2fo4m6ge2jsdk4g6mcucnkuh.apps.googleusercontent.com",
-  });
+  androidClientId: "1018177453189-6uciu7sqlaqkh2reil52ag08moj2avl4.apps.googleusercontent.com",
+  
+  webClientId: "1018177453189-cosma8rk2fo4m6ge2jsdk4g6mcucnkuh.apps.googleusercontent.com",
+  scopes: ["profile", "email"],
+});
 
-  // ✅ Login Google → salva role e vai pro DrawerNavigatorView
+
+
   useEffect(() => {
     if (response?.type === "success") {
       const { authentication } = response;
@@ -46,7 +45,6 @@ export default function LoginScreen({ navigation }) {
           await AsyncStorage.setItem("userRole", "viewer");
           await AsyncStorage.setItem("loginType", "google");
 
-          // 🚀 Redireciona corretamente pro DrawerNavigatorView
           navigation.reset({
             index: 0,
             routes: [{ name: "DrawerNavigatorView" }],
@@ -56,7 +54,7 @@ export default function LoginScreen({ navigation }) {
     }
   }, [response]);
 
-  // ✅ Login manual (adm / admHonda)
+  // ✅ Login manual
   const handleLogin = async () => {
     if (username === "adm" && password === "123") {
       await AsyncStorage.setItem("userRole", "admin");
@@ -80,31 +78,41 @@ export default function LoginScreen({ navigation }) {
 
   useEffect(() => {
     Animated.sequence([
-      Animated.timing(fadeLogo, { toValue: 1, duration: 1500, useNativeDriver: true }),
-      Animated.timing(fadeContent, { toValue: 1, duration: 1000, useNativeDriver: true }),
+      Animated.timing(fadeLogo, {
+        toValue: 1,
+        duration: 1500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeContent, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
     ]).start();
 
     Animated.loop(
       Animated.sequence([
         Animated.timing(gradientAnim, {
           toValue: 1,
-          duration: 6000,
-          easing: Easing.linear,
+          duration: 5000,
+          easing: Easing.inOut(Easing.ease),
           useNativeDriver: false,
         }),
         Animated.timing(gradientAnim, {
           toValue: 0,
-          duration: 6000,
-          easing: Easing.linear,
+          duration: 5000,
+          easing: Easing.inOut(Easing.ease),
           useNativeDriver: false,
         }),
       ])
     ).start();
   }, []);
 
-  // ✅ Animações botões
   const handlePressIn = () => {
-    Animated.spring(buttonScale, { toValue: 0.96, useNativeDriver: true }).start();
+    Animated.spring(buttonScale, {
+      toValue: 0.96,
+      useNativeDriver: true,
+    }).start();
   };
   const handlePressOut = () => {
     Animated.spring(buttonScale, {
@@ -114,7 +122,6 @@ export default function LoginScreen({ navigation }) {
       useNativeDriver: true,
     }).start();
   };
-
   const handleGooglePressIn = () => {
     Animated.spring(googleScale, { toValue: 0.96, useNativeDriver: true }).start();
   };
@@ -133,7 +140,7 @@ export default function LoginScreen({ navigation }) {
   });
   const bg2 = gradientAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ["#042e5f", "#166ec9"],
+    outputRange: ["#042e5f", "#155db8"],
   });
 
   return (
@@ -145,18 +152,17 @@ export default function LoginScreen({ navigation }) {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.inner}
       >
+        {/* 🔹 Logo transparente */}
         <Animated.View style={[styles.logoContainer, { opacity: fadeLogo }]}>
-          <View style={styles.logoWrapper}>
-            <Image
-              source={require("../../assets/logo-masters.jpg")}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            <View style={styles.logoGlow} />
-          </View>
+          <Image
+            source={require("../../assets/logo-masters.png")} // deve ter fundo transparente
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.appName}>Sistema de Almoxarifado</Text>
         </Animated.View>
 
+        {/* 🔹 Card de login */}
         <Animated.View style={[styles.card, { opacity: fadeContent }]}>
           <Text style={styles.title}>Bem-vindo 👋</Text>
           <Text style={styles.subtitle}>Acesse com suas credenciais</Text>
@@ -185,7 +191,7 @@ export default function LoginScreen({ navigation }) {
             />
           </View>
 
-          {/* 🔹 Botão principal */}
+          {/* 🔹 Botão de login */}
           <Animated.View style={{ transform: [{ scale: buttonScale }], width: "100%" }}>
             <TouchableOpacity
               onPressIn={handlePressIn}
@@ -219,6 +225,7 @@ export default function LoginScreen({ navigation }) {
           </Animated.View>
         </Animated.View>
 
+        {/* 🔹 Rodapé */}
         <Animated.Text style={[styles.footerText, { opacity: fadeContent }]}>
           © {currentYear} Masters Engenharia
         </Animated.Text>
@@ -230,27 +237,15 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   animatedBackground: { ...StyleSheet.absoluteFillObject, opacity: 0.5 },
-  inner: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 25 },
-  logoContainer: { alignItems: "center", marginBottom: 30 },
-  logoWrapper: { position: "relative", alignItems: "center" },
-  logo: {
-    width: 130,
-    height: 80,
-    borderRadius: 15,
-    borderWidth: 2,
-    borderColor: "#ffffffaa",
-    shadowColor: "#fff",
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
-    elevation: 6,
+  inner: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 25,
   },
-  logoGlow: {
-    position: "absolute",
-    width: 140,
-    height: 90,
-    borderRadius: 20,
-    backgroundColor: "#ffffff20",
-  },
+
+  logoContainer: { alignItems: "center", marginBottom: 25 },
+  logo: { width: 160, height: 95 },
   appName: {
     fontSize: 17,
     color: "#fff",
@@ -258,6 +253,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     letterSpacing: 0.5,
   },
+
   card: {
     backgroundColor: "rgba(255,255,255,0.97)",
     width: "100%",
@@ -288,6 +284,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     marginTop: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
   },
   buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold", marginLeft: 8 },
   googleButton: {
@@ -300,9 +301,6 @@ const styles = StyleSheet.create({
     marginTop: 18,
     borderWidth: 1,
     borderColor: "#ddd",
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
     elevation: 3,
   },
   googleIcon: { width: 24, height: 24, marginRight: 10 },

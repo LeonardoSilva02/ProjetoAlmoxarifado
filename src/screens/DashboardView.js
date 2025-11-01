@@ -28,7 +28,7 @@ export default function DashboardView({ navigation }) {
         {/* Masters */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("Estoque", { readOnly: true })}
+          onPress={() => navigation.navigate("EstoqueMasters", { readOnly: true })}
         >
           <Ionicons name="cube-outline" size={40} color="#0b5394" />
           <Text style={styles.cardText}>Estoque Masters</Text>
@@ -37,7 +37,7 @@ export default function DashboardView({ navigation }) {
 
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("Ferramentas", { readOnly: true })}
+          onPress={() => navigation.navigate("FerramentasMasters", { readOnly: true })}
         >
           <Ionicons name="construct-outline" size={40} color="#0b5394" />
           <Text style={styles.cardText}>Ferramentas Masters</Text>
