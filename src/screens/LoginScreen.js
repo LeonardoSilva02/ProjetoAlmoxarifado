@@ -37,7 +37,7 @@ export default function LoginScreen({ navigation }) {
       "1018177453189-cosma8rk2fo4m6ge2jsdk4g6mcucnkuh.apps.googleusercontent.com",
   });
 
-  // ✅ Quando login via Google for bem-sucedido
+  // ✅ Login Google → salva role e vai pro DrawerNavigatorView
   useEffect(() => {
     if (response?.type === "success") {
       const { authentication } = response;
@@ -45,20 +45,25 @@ export default function LoginScreen({ navigation }) {
         (async () => {
           await AsyncStorage.setItem("userRole", "viewer");
           await AsyncStorage.setItem("loginType", "google");
-          navigation.replace("DashboardView", { readOnly: true });
+
+          // 🚀 Redireciona corretamente pro DrawerNavigatorView
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "DrawerNavigatorView" }],
+          });
         })();
       }
     }
   }, [response]);
 
-  // ✅ Login manual
+  // ✅ Login manual (adm / admHonda)
   const handleLogin = async () => {
     if (username === "adm" && password === "123") {
       await AsyncStorage.setItem("userRole", "admin");
       await AsyncStorage.setItem("loginType", "manual");
       navigation.replace("DrawerNavigator");
     } else if (username === "admHonda" && password === "123") {
-      await AsyncStorage.setItem("userRole", "admin");
+      await AsyncStorage.setItem("userRole", "adminHonda");
       await AsyncStorage.setItem("loginType", "manual");
       navigation.replace("DrawerNavigatorHonda");
     } else {
@@ -75,16 +80,8 @@ export default function LoginScreen({ navigation }) {
 
   useEffect(() => {
     Animated.sequence([
-      Animated.timing(fadeLogo, {
-        toValue: 1,
-        duration: 1500,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeContent, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
+      Animated.timing(fadeLogo, { toValue: 1, duration: 1500, useNativeDriver: true }),
+      Animated.timing(fadeContent, { toValue: 1, duration: 1000, useNativeDriver: true }),
     ]).start();
 
     Animated.loop(
@@ -105,7 +102,7 @@ export default function LoginScreen({ navigation }) {
     ).start();
   }, []);
 
-  // ✅ Animação dos botões
+  // ✅ Animações botões
   const handlePressIn = () => {
     Animated.spring(buttonScale, { toValue: 0.96, useNativeDriver: true }).start();
   };
@@ -196,10 +193,7 @@ export default function LoginScreen({ navigation }) {
               onPress={handleLogin}
               activeOpacity={0.8}
             >
-              <LinearGradient
-                colors={["#1a73e8", "#0b5394"]}
-                style={styles.buttonGradient}
-              >
+              <LinearGradient colors={["#1a73e8", "#0b5394"]} style={styles.buttonGradient}>
                 <Ionicons name="log-in-outline" size={20} color="#fff" />
                 <Text style={styles.buttonText}>Entrar</Text>
               </LinearGradient>
@@ -217,9 +211,7 @@ export default function LoginScreen({ navigation }) {
               activeOpacity={0.8}
             >
               <Image
-                source={{
-                  uri: "https://developers.google.com/identity/images/g-logo.png",
-                }}
+                source={{ uri: "https://developers.google.com/identity/images/g-logo.png" }}
                 style={styles.googleIcon}
               />
               <Text style={styles.googleText}>Entrar com Google</Text>
@@ -238,12 +230,7 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   animatedBackground: { ...StyleSheet.absoluteFillObject, opacity: 0.5 },
-  inner: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 25,
-  },
+  inner: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 25 },
   logoContainer: { alignItems: "center", marginBottom: 30 },
   logoWrapper: { position: "relative", alignItems: "center" },
   logo: {
