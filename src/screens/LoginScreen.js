@@ -1,4 +1,3 @@
-// src/screens/LoginScreen.js
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -27,7 +26,7 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const currentYear = new Date().getFullYear();
 
-  // ✅ Configuração do Google Login
+  // ✅ Configuração do login com Google
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId:
       "1018177453189-cosma8rk2fo4m6ge2jsdk4g6mcucnkuh.apps.googleusercontent.com",
@@ -42,16 +41,24 @@ export default function LoginScreen({ navigation }) {
     if (response?.type === "success") {
       const { authentication } = response;
       if (authentication?.accessToken) {
-        (async () => {
-          await AsyncStorage.setItem("userRole", "viewer");
-          await AsyncStorage.setItem("loginType", "google");
-          navigation.replace("DashboardView", { readOnly: true });
-        })();
+        fetch("https://www.googleapis.com/userinfo/v2/me", {
+          headers: { Authorization: `Bearer ${authentication.accessToken}` },
+        })
+          .then((res) => res.json())
+          .then(async (userInfo) => {
+            await AsyncStorage.setItem("userRole", "viewer");
+            await AsyncStorage.setItem("loginType", "google");
+            await AsyncStorage.setItem("userName", userInfo.name || "Usuário");
+            navigation.replace("DashboardView", { readOnly: true });
+          })
+          .catch(() => {
+            Alert.alert("Erro", "Falha ao obter dados da conta Google.");
+          });
       }
     }
   }, [response]);
 
-  // ✅ Login manual
+  // ✅ Login manual (ADM e Honda)
   const handleLogin = async () => {
     if (username === "adm" && password === "123") {
       await AsyncStorage.setItem("userRole", "admin");
@@ -75,16 +82,8 @@ export default function LoginScreen({ navigation }) {
 
   useEffect(() => {
     Animated.sequence([
-      Animated.timing(fadeLogo, {
-        toValue: 1,
-        duration: 1500,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeContent, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
+      Animated.timing(fadeLogo, { toValue: 1, duration: 1500, useNativeDriver: true }),
+      Animated.timing(fadeContent, { toValue: 1, duration: 1000, useNativeDriver: true }),
     ]).start();
 
     Animated.loop(
@@ -106,29 +105,25 @@ export default function LoginScreen({ navigation }) {
   }, []);
 
   // ✅ Animação dos botões
-  const handlePressIn = () => {
+  const handlePressIn = () =>
     Animated.spring(buttonScale, { toValue: 0.96, useNativeDriver: true }).start();
-  };
-  const handlePressOut = () => {
+  const handlePressOut = () =>
     Animated.spring(buttonScale, {
       toValue: 1,
       friction: 3,
       tension: 80,
       useNativeDriver: true,
     }).start();
-  };
 
-  const handleGooglePressIn = () => {
+  const handleGooglePressIn = () =>
     Animated.spring(googleScale, { toValue: 0.96, useNativeDriver: true }).start();
-  };
-  const handleGooglePressOut = () => {
+  const handleGooglePressOut = () =>
     Animated.spring(googleScale, {
       toValue: 1,
       friction: 3,
       tension: 80,
       useNativeDriver: true,
     }).start();
-  };
 
   const bg1 = gradientAnim.interpolate({
     inputRange: [0, 1],
@@ -196,10 +191,7 @@ export default function LoginScreen({ navigation }) {
               onPress={handleLogin}
               activeOpacity={0.8}
             >
-              <LinearGradient
-                colors={["#1a73e8", "#0b5394"]}
-                style={styles.buttonGradient}
-              >
+              <LinearGradient colors={["#1a73e8", "#0b5394"]} style={styles.buttonGradient}>
                 <Ionicons name="log-in-outline" size={20} color="#fff" />
                 <Text style={styles.buttonText}>Entrar</Text>
               </LinearGradient>

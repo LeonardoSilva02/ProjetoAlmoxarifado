@@ -20,20 +20,16 @@ export default function App() {
   useEffect(() => {
     const checkLogin = async () => {
       try {
-        // Lê o tipo de usuário salvo no AsyncStorage
+        // 🔹 Lê o tipo de usuário salvo no AsyncStorage
         const userRole = await AsyncStorage.getItem("userRole");
 
         if (userRole === "admin") {
-          // 🔹 ADM geral
           setInitialRoute("DrawerNavigator");
         } else if (userRole === "adminHonda") {
-          // 🔹 ADM Honda
           setInitialRoute("DrawerNavigatorHonda");
         } else if (userRole === "viewer") {
-          // 🔹 Login com Google (modo visualização)
           setInitialRoute("DrawerNavigatorView");
         } else {
-          // 🔹 Padrão: sem login
           setInitialRoute("Login");
         }
       } catch (error) {
@@ -45,7 +41,7 @@ export default function App() {
     checkLogin();
   }, []);
 
-  // 🔹 Enquanto verifica o tipo de login, mostra tela de carregamento
+  // 🔹 Tela de carregamento enquanto verifica login
   if (!initialRoute) {
     return (
       <View
@@ -66,25 +62,25 @@ export default function App() {
     <NavigationContainer>
       <StatusBar style="light" backgroundColor="#0b5394" />
       <Stack.Navigator
-        initialRouteName={initialRoute}
+        initialRouteName="Login" // 🔹 Sempre inicia pelo Login
         screenOptions={{
           headerShown: false,
           gestureEnabled: false,
         }}
       >
-        {/* 🔹 Login padrão */}
+        {/* 🔹 Tela de login principal */}
         <Stack.Screen name="Login" component={LoginScreen} />
 
-        {/* 🔹 Navegação do ADM geral */}
+        {/* 🔹 Navegação ADM geral */}
         <Stack.Screen name="DrawerNavigator" component={DrawerNavigator} />
 
-        {/* 🔹 Navegação do ADM Honda */}
+        {/* 🔹 Navegação ADM Honda */}
         <Stack.Screen
           name="DrawerNavigatorHonda"
           component={DrawerNavigatorHonda}
         />
 
-        {/* 🔹 Navegação apenas visualização (Google) */}
+        {/* 🔹 Navegação modo visualização (Google) */}
         <Stack.Screen
           name="DrawerNavigatorView"
           component={DrawerNavigatorView}
