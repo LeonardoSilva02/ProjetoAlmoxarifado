@@ -291,8 +291,8 @@ export default function AlmoxarifadoHondaScreen() {
             />
           )}
         </Tab.Screen>
-        <Tab.Screen name="Chumbadores">
-          {() => <CategoriaTab categoriaKey="chumbadores" titulo="Honda - Chumbadores" />}
+        <Tab.Screen name="Outros">
+          {() => <CategoriaTab categoriaKey=" Outros" titulo="Honda - Outros" />}
         </Tab.Screen>
       </Tab.Navigator>
     </View>

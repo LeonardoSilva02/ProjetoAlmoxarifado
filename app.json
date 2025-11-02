@@ -4,35 +4,26 @@
     "slug": "ProjetoAlmoxarifado",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo-masters.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logo-masters.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "ios": {
-      "supportsTablet": true
+      "backgroundColor": "#0b5394"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/logo-masters.png",
+        "backgroundColor": "#0b5394"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.leonardosilva02.ProjetoAlmoxarifado"
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {
         "projectId": "e53629f2-e5fa-4623-ab5c-61907c1aa295"
       }
-    },
-    "plugins": [
-      "expo-web-browser"
-    ]
+    }
   }
 }

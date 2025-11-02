@@ -333,7 +333,7 @@ export default function EstoqueScreen({ route }) {
         <Tab.Screen
           name="Porcas e Arruelas"
           options={{
-            tabBarIcon: ({ color }) => <Ionicons name="hardware-chip" size={18} color={color} />,
+            tabBarIcon: ({ color }) => <Ionicons name="cog-outline" size={18} color={color} />,
           }}
         >
           {() => (
@@ -346,12 +346,12 @@ export default function EstoqueScreen({ route }) {
         </Tab.Screen>
 
         <Tab.Screen
-          name="Chumbadores"
+          name="Outros"
           options={{
             tabBarIcon: ({ color }) => <Ionicons name="construct" size={18} color={color} />,
           }}
         >
-          {() => <CategoriaTab categoriaKey="chumbadores" titulo="Materiais - Chumbadores" readOnly={readOnly} />}
+          {() => <CategoriaTab categoriaKey="Outros" titulo="Materiais - Outros" readOnly={readOnly} />}
         </Tab.Screen>
       </Tab.Navigator>
     </View>

@@ -1,4 +1,3 @@
-// src/screens/LoginScreen.js
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -29,43 +28,70 @@ export default function LoginScreen({ navigation }) {
 
   // ✅ Login Google
   const [request, response, promptAsync] = Google.useAuthRequest({
-  androidClientId: "1018177453189-6uciu7sqlaqkh2reil52ag08moj2avl4.apps.googleusercontent.com",
-  
-  webClientId: "1018177453189-cosma8rk2fo4m6ge2jsdk4g6mcucnkuh.apps.googleusercontent.com",
-  scopes: ["profile", "email"],
-});
-
-
+    androidClientId: "1018177453189-6uciu7sqlaqkh2reil52ag08moj2avl4.apps.googleusercontent.com",
+    webClientId: "1018177453189-cosma8rk2fo4m6ge2jsdk4g6mcucnkuh.apps.googleusercontent.com",
+    scopes: ["profile", "email"],
+  });
 
   useEffect(() => {
-    if (response?.type === "success") {
-      const { authentication } = response;
-      if (authentication?.accessToken) {
-        (async () => {
+    const handleGoogleLogin = async () => {
+      if (response?.type === "success") {
+        const { authentication } = response;
+
+        if (!authentication?.accessToken) {
+          Alert.alert("Erro", "Não foi possível obter o token do Google. Tente novamente.");
+          return;
+        }
+
+        try {
+          const res = await fetch("https://www.googleapis.com/userinfo/v2/me", {
+            headers: { Authorization: `Bearer ${authentication.accessToken}` },
+          });
+
+          const userInfo = await res.json();
+
           await AsyncStorage.setItem("userRole", "viewer");
           await AsyncStorage.setItem("loginType", "google");
+          await AsyncStorage.setItem("userName", userInfo.name || "Usuário Google");
+
+          Alert.alert("Sucesso", `Bem-vindo(a), ${userInfo.name || "usuário"}!`);
 
           navigation.reset({
             index: 0,
             routes: [{ name: "DrawerNavigatorView" }],
           });
-        })();
+        } catch (error) {
+          console.error("Erro ao obter dados do Google:", error);
+          Alert.alert("Erro", "Falha ao autenticar com o Google.");
+        }
       }
-    }
+    };
+
+    handleGoogleLogin();
   }, [response]);
 
   // ✅ Login manual
   const handleLogin = async () => {
-    if (username === "adm" && password === "123") {
-      await AsyncStorage.setItem("userRole", "admin");
-      await AsyncStorage.setItem("loginType", "manual");
-      navigation.replace("DrawerNavigator");
-    } else if (username === "admHonda" && password === "123") {
-      await AsyncStorage.setItem("userRole", "adminHonda");
-      await AsyncStorage.setItem("loginType", "manual");
-      navigation.replace("DrawerNavigatorHonda");
-    } else {
-      Alert.alert("Erro", "Usuário ou senha incorretos ❌");
+    try {
+      if (username === "adm" && password === "123") {
+        await AsyncStorage.setItem("userRole", "admin");
+        await AsyncStorage.setItem("loginType", "manual");
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "DrawerNavigator" }],
+        });
+      } else if (username === "admHonda" && password === "123") {
+        await AsyncStorage.setItem("userRole", "adminHonda");
+        await AsyncStorage.setItem("loginType", "manual");
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "DrawerNavigatorHonda" }],
+        });
+      } else {
+        Alert.alert("Erro", "Usuário ou senha incorretos ❌");
+      }
+    } catch (error) {
+      console.log("Erro no login:", error);
     }
   };
 
@@ -74,21 +100,31 @@ export default function LoginScreen({ navigation }) {
   const fadeContent = useRef(new Animated.Value(0)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
   const googleScale = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
   const gradientAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.sequence([
-      Animated.timing(fadeLogo, {
-        toValue: 1,
-        duration: 1500,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeContent, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
+      Animated.timing(fadeLogo, { toValue: 1, duration: 1500, useNativeDriver: true }),
+      Animated.timing(fadeContent, { toValue: 1, duration: 1000, useNativeDriver: true }),
     ]).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, {
+          toValue: 1,
+          duration: 2000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+        Animated.timing(glowAnim, {
+          toValue: 0,
+          duration: 2000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: false,
+        }),
+      ])
+    ).start();
 
     Animated.loop(
       Animated.sequence([
@@ -108,31 +144,10 @@ export default function LoginScreen({ navigation }) {
     ).start();
   }, []);
 
-  const handlePressIn = () => {
-    Animated.spring(buttonScale, {
-      toValue: 0.96,
-      useNativeDriver: true,
-    }).start();
-  };
-  const handlePressOut = () => {
-    Animated.spring(buttonScale, {
-      toValue: 1,
-      friction: 3,
-      tension: 80,
-      useNativeDriver: true,
-    }).start();
-  };
-  const handleGooglePressIn = () => {
-    Animated.spring(googleScale, { toValue: 0.96, useNativeDriver: true }).start();
-  };
-  const handleGooglePressOut = () => {
-    Animated.spring(googleScale, {
-      toValue: 1,
-      friction: 3,
-      tension: 80,
-      useNativeDriver: true,
-    }).start();
-  };
+  const glowOpacity = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.2, 0.6],
+  });
 
   const bg1 = gradientAnim.interpolate({
     inputRange: [0, 1],
@@ -152,10 +167,11 @@ export default function LoginScreen({ navigation }) {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.inner}
       >
-        {/* 🔹 Logo transparente */}
+        {/* 🔹 Logo */}
         <Animated.View style={[styles.logoContainer, { opacity: fadeLogo }]}>
+          <Animated.View style={[styles.glow, { opacity: glowOpacity }]} />
           <Image
-            source={require("../../assets/logo-masters.png")} // deve ter fundo transparente
+            source={require("../../assets/logo-masters.png")}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -194,8 +210,17 @@ export default function LoginScreen({ navigation }) {
           {/* 🔹 Botão de login */}
           <Animated.View style={{ transform: [{ scale: buttonScale }], width: "100%" }}>
             <TouchableOpacity
-              onPressIn={handlePressIn}
-              onPressOut={handlePressOut}
+              onPressIn={() =>
+                Animated.spring(buttonScale, { toValue: 0.96, useNativeDriver: true }).start()
+              }
+              onPressOut={() =>
+                Animated.spring(buttonScale, {
+                  toValue: 1,
+                  friction: 3,
+                  tension: 80,
+                  useNativeDriver: true,
+                }).start()
+              }
               onPress={handleLogin}
               activeOpacity={0.8}
             >
@@ -206,11 +231,20 @@ export default function LoginScreen({ navigation }) {
             </TouchableOpacity>
           </Animated.View>
 
-          {/* 🔹 Botão Google */}
+          {/* 🔹 Login com Google */}
           <Animated.View style={{ transform: [{ scale: googleScale }], width: "100%" }}>
             <TouchableOpacity
-              onPressIn={handleGooglePressIn}
-              onPressOut={handleGooglePressOut}
+              onPressIn={() =>
+                Animated.spring(googleScale, { toValue: 0.96, useNativeDriver: true }).start()
+              }
+              onPressOut={() =>
+                Animated.spring(googleScale, {
+                  toValue: 1,
+                  friction: 3,
+                  tension: 80,
+                  useNativeDriver: true,
+                }).start()
+              }
               style={styles.googleButton}
               onPress={() => promptAsync()}
               disabled={!request}
@@ -237,15 +271,20 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   animatedBackground: { ...StyleSheet.absoluteFillObject, opacity: 0.5 },
-  inner: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 25,
+  inner: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 25 },
+  logoContainer: { alignItems: "center", marginBottom: 30, position: "relative" },
+  glow: {
+    position: "absolute",
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: "#ffffff40",
+    shadowColor: "#fff",
+    shadowOpacity: 0.8,
+    shadowRadius: 25,
+    elevation: 12,
   },
-
-  logoContainer: { alignItems: "center", marginBottom: 25 },
-  logo: { width: 160, height: 95 },
+  logo: { width: 140, height: 90, borderRadius: 18, zIndex: 2 },
   appName: {
     fontSize: 17,
     color: "#fff",
@@ -253,7 +292,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     letterSpacing: 0.5,
   },
-
   card: {
     backgroundColor: "rgba(255,255,255,0.97)",
     width: "100%",
