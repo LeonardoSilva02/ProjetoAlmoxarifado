@@ -10,6 +10,7 @@ import {
   createDrawerNavigator,
   DrawerContentScrollView,
   DrawerItemList,
+  DrawerItem,
 } from "@react-navigation/drawer";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -19,8 +20,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import DashboardView from "../screens/DashboardView";
 import EstoqueScreen from "../screens/EstoqueScreen";
 import FerramentasScreen from "../screens/FerramentasScreen";
-import EstoqueHondaScreen from "../screens/EstoqueHondaScreen";
-import FerramentasHondaScreen from "../screens/FerramentasHondaScreen";
+import EstoqueHondaView from "../screens/EstoqueHondaView";
+import FerramentasHondaView from "../screens/FerramentasHondaView";
 
 const Drawer = createDrawerNavigator();
 
@@ -48,8 +49,8 @@ function CustomDrawerContent(props) {
         <View style={styles.profileCircle}>
           <Ionicons name="person-circle-outline" size={70} color="#fff" />
         </View>
-        <Text style={styles.userName}>Visualizador (Google)</Text>
-        <Text style={styles.userEmail}>{email ?? "Conta Google"}</Text>
+  <Text style={styles.userName}>Visualizador (Visitante)</Text>
+  <Text style={styles.userEmail}>{email ?? "Visitante"}</Text>
       </LinearGradient>
 
       <View style={styles.drawerItems}>
@@ -57,6 +58,17 @@ function CustomDrawerContent(props) {
       </View>
 
       <View style={styles.footer}>
+        <View style={{ marginBottom: 8 }}>
+          <DrawerItem
+            label="Entrar / Login"
+            labelStyle={{ color: "#0b5394", fontWeight: "700" }}
+            icon={({ size }) => (
+              <Ionicons name="log-in-outline" color="#0b5394" size={size} />
+            )}
+            onPress={() => props.navigation.navigate("Login")}
+          />
+        </View>
+
         <Text style={styles.versionText}>Versão 1.0.0</Text>
       </View>
     </DrawerContentScrollView>
@@ -126,8 +138,7 @@ export default function DrawerNavigatorView() {
 
       <Drawer.Screen
         name="EstoqueHonda"
-        component={EstoqueHondaScreen}
-        initialParams={{ readOnly: true }}
+        component={EstoqueHondaView}
         options={{
           title: "Estoque Honda (visualizar)",
           drawerIcon: ({ color }) => (
@@ -138,8 +149,7 @@ export default function DrawerNavigatorView() {
 
       <Drawer.Screen
         name="FerramentasHonda"
-        component={FerramentasHondaScreen}
-        initialParams={{ readOnly: true }}
+        component={FerramentasHondaView}
         options={{
           title: "Ferramentas Honda (visualizar)",
           drawerIcon: ({ color }) => (

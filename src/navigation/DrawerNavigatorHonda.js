@@ -14,8 +14,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import DashboardHonda from "../screens/DashboardHonda";
 import EstoqueScreen from "../screens/EstoqueScreen"; // ✅ Estoque Masters (visualização)
 import FerramentasScreen from "../screens/FerramentasScreen"; // ✅ Ferramentas Masters (visualização)
-import EstoqueHondaScreen from "../screens/EstoqueHondaScreen"; // ✅ Estoque Honda (ADM)
-import FerramentasHondaScreen from "../screens/FerramentasHondaScreen"; // ✅ Ferramentas Honda (ADM)
+import EstoqueHondaScreen from "../screens/EstoqueHondaScreen"; // ✅ Estoque Honda (acesso completo)
+import FerramentasHondaScreen from "../screens/FerramentasHondaScreen"; // ✅ Ferramentas Honda (acesso completo)
 
 const Drawer = createDrawerNavigator();
 

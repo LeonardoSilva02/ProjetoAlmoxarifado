@@ -16,59 +16,14 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import * as WebBrowser from "expo-web-browser";
-import * as Google from "expo-auth-session/providers/google";
-
-WebBrowser.maybeCompleteAuthSession();
+// Google login removido — usar 'Entrar como visitante' para visualização pública
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const currentYear = new Date().getFullYear();
 
-  // ✅ Login Google
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: "1018177453189-6uciu7sqlaqkh2reil52ag08moj2avl4.apps.googleusercontent.com",
-    webClientId: "1018177453189-cosma8rk2fo4m6ge2jsdk4g6mcucnkuh.apps.googleusercontent.com",
-    scopes: ["profile", "email"],
-  });
-
-  useEffect(() => {
-    const handleGoogleLogin = async () => {
-      if (response?.type === "success") {
-        const { authentication } = response;
-
-        if (!authentication?.accessToken) {
-          Alert.alert("Erro", "Não foi possível obter o token do Google. Tente novamente.");
-          return;
-        }
-
-        try {
-          const res = await fetch("https://www.googleapis.com/userinfo/v2/me", {
-            headers: { Authorization: `Bearer ${authentication.accessToken}` },
-          });
-
-          const userInfo = await res.json();
-
-          await AsyncStorage.setItem("userRole", "viewer");
-          await AsyncStorage.setItem("loginType", "google");
-          await AsyncStorage.setItem("userName", userInfo.name || "Usuário Google");
-
-          Alert.alert("Sucesso", `Bem-vindo(a), ${userInfo.name || "usuário"}!`);
-
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "DrawerNavigatorView" }],
-          });
-        } catch (error) {
-          console.error("Erro ao obter dados do Google:", error);
-          Alert.alert("Erro", "Falha ao autenticar com o Google.");
-        }
-      }
-    };
-
-    handleGoogleLogin();
-  }, [response]);
+  // Google login removido. Se quiser reativar mais tarde, podemos integrar de novo.
 
   // ✅ Login manual
   const handleLogin = async () => {
@@ -95,12 +50,12 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
+  // Nota: não redirecionamos automaticamente aqui — queremos sempre mostrar a tela de Login
   // ✅ Animações
   const fadeLogo = useRef(new Animated.Value(0)).current;
   const fadeContent = useRef(new Animated.Value(0)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
   const googleScale = useRef(new Animated.Value(1)).current;
-  const glowAnim = useRef(new Animated.Value(0)).current;
   const gradientAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -108,23 +63,6 @@ export default function LoginScreen({ navigation }) {
       Animated.timing(fadeLogo, { toValue: 1, duration: 1500, useNativeDriver: true }),
       Animated.timing(fadeContent, { toValue: 1, duration: 1000, useNativeDriver: true }),
     ]).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnim, {
-          toValue: 1,
-          duration: 2000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: false,
-        }),
-        Animated.timing(glowAnim, {
-          toValue: 0,
-          duration: 2000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: false,
-        }),
-      ])
-    ).start();
 
     Animated.loop(
       Animated.sequence([
@@ -143,11 +81,6 @@ export default function LoginScreen({ navigation }) {
       ])
     ).start();
   }, []);
-
-  const glowOpacity = glowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.2, 0.6],
-  });
 
   const bg1 = gradientAnim.interpolate({
     inputRange: [0, 1],
@@ -169,7 +102,6 @@ export default function LoginScreen({ navigation }) {
       >
         {/* 🔹 Logo */}
         <Animated.View style={[styles.logoContainer, { opacity: fadeLogo }]}>
-          <Animated.View style={[styles.glow, { opacity: glowOpacity }]} />
           <Image
             source={require("../../assets/logo-masters.png")}
             style={styles.logo}
@@ -231,7 +163,7 @@ export default function LoginScreen({ navigation }) {
             </TouchableOpacity>
           </Animated.View>
 
-          {/* 🔹 Login com Google */}
+          {/* 🔹 Entrar como visitante (visualização pública) */}
           <Animated.View style={{ transform: [{ scale: googleScale }], width: "100%" }}>
             <TouchableOpacity
               onPressIn={() =>
@@ -246,15 +178,17 @@ export default function LoginScreen({ navigation }) {
                 }).start()
               }
               style={styles.googleButton}
-              onPress={() => promptAsync()}
-              disabled={!request}
+              onPress={async () => {
+                // marca como viewer e navega para a visualização pública
+                await AsyncStorage.setItem("isLoggedIn", "true");
+                await AsyncStorage.setItem("userRole", "viewer");
+                await AsyncStorage.setItem("loginType", "guest");
+                navigation.reset({ index: 0, routes: [{ name: "DrawerNavigatorView" }] });
+              }}
               activeOpacity={0.8}
             >
-              <Image
-                source={{ uri: "https://developers.google.com/identity/images/g-logo.png" }}
-                style={styles.googleIcon}
-              />
-              <Text style={styles.googleText}>Entrar com Google</Text>
+              <Ionicons name="eye-outline" size={20} color="#444" style={{ marginRight: 8 }} />
+              <Text style={styles.googleText}>Entrar como visitante</Text>
             </TouchableOpacity>
           </Animated.View>
         </Animated.View>
@@ -272,19 +206,8 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   animatedBackground: { ...StyleSheet.absoluteFillObject, opacity: 0.5 },
   inner: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 25 },
-  logoContainer: { alignItems: "center", marginBottom: 30, position: "relative" },
-  glow: {
-    position: "absolute",
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: "#ffffff40",
-    shadowColor: "#fff",
-    shadowOpacity: 0.8,
-    shadowRadius: 25,
-    elevation: 12,
-  },
-  logo: { width: 140, height: 90, borderRadius: 18, zIndex: 2 },
+  logoContainer: { alignItems: "center", marginBottom: 30 },
+  logo: { width: 140, height: 90, borderRadius: 18 },
   appName: {
     fontSize: 17,
     color: "#fff",

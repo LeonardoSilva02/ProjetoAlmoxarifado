@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "ProjetoAlmoxarifado",
-    "slug": "ProjetoAlmoxarifado",
+  "name": "Almoxarifado Master´s",
+  "slug": "ProjetoAlmoxarifado",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo-masters.png",
@@ -23,6 +23,12 @@
     "extra": {
       "eas": {
         "projectId": "e53629f2-e5fa-4623-ab5c-61907c1aa295"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.leonardosilva02.ProjetoAlmoxarifado",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
       }
     }
   }

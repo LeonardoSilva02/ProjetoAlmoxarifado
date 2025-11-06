@@ -1,3 +1,4 @@
+// src/screens/EstoqueScreen.js
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -161,27 +162,23 @@ function CategoriaTab({ categoriaKey, titulo, readOnly }) {
           {item.quantidade <= item.minimo && <Text style={styles.warning}>⚠ Abaixo do mínimo</Text>}
         </View>
 
-        <View style={styles.cardActions}>
-          {/* ação de alterar quantidade — bloqueada em readOnly */}
-          <TouchableOpacity style={styles.iconBtn} onPress={() => alterarQuantidade(item, 1)}>
-            <Ionicons name="add-circle" size={28} color="#0b5394" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => alterarQuantidade(item, -1)}>
-            <Ionicons name="remove-circle" size={28} color="#ff4d4d" />
-          </TouchableOpacity>
-
-          {/* editar / deletar — só aparece se não for readOnly */}
-          {!readOnly && (
-            <>
-              <TouchableOpacity style={styles.iconBtn} onPress={() => abrirModalEditar(item)}>
-                <Ionicons name="pencil" size={22} color="#0b5394" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.iconBtn} onPress={() => deletar(item)}>
-                <Ionicons name="trash" size={22} color="#777" />
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
+        {/* Botões aparecem só para ADM */}
+        {!readOnly && (
+          <View style={styles.cardActions}>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => alterarQuantidade(item, 1)}>
+              <Ionicons name="add-circle" size={28} color="#0b5394" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => alterarQuantidade(item, -1)}>
+              <Ionicons name="remove-circle" size={28} color="#ff4d4d" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => abrirModalEditar(item)}>
+              <Ionicons name="pencil" size={22} color="#0b5394" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => deletar(item)}>
+              <Ionicons name="trash" size={22} color="#777" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     );
   };
@@ -283,7 +280,6 @@ function CategoriaTab({ categoriaKey, titulo, readOnly }) {
    Tela principal
    ------------------------- */
 export default function EstoqueScreen({ route }) {
-  // readOnly vindo de navigation.navigate("Estoque", { readOnly: true })
   const readOnly = route?.params?.readOnly ?? false;
 
   return (
@@ -291,7 +287,11 @@ export default function EstoqueScreen({ route }) {
       <View style={styles.header}>
         <Ionicons name="layers" size={22} color="#fff" style={{ marginRight: 8 }} />
         <Text style={styles.headerTitle}>Controle de Estoque</Text>
-        {readOnly && <Text style={{ color: "#fff", marginLeft: 12, fontWeight: "700" }}>(Somente visualização)</Text>}
+        {readOnly && (
+          <Text style={{ color: "#fff", marginLeft: 12, fontWeight: "700" }}>
+            (Somente visualização)
+          </Text>
+        )}
       </View>
 
       <Tab.Navigator
@@ -303,37 +303,45 @@ export default function EstoqueScreen({ route }) {
           swipeEnabled: true,
         }}
       >
-        <Tab.Screen
+        <Tab.Screen 
           name="Elétrica"
           options={{
-            tabBarIcon: ({ color }) => <Ionicons name="flash" size={18} color={color} />,
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="flash" size={20} color={color} />
+            ),
           }}
         >
           {() => <CategoriaTab categoriaKey="eletrica" titulo="Materiais - Elétrica" readOnly={readOnly} />}
         </Tab.Screen>
 
-        <Tab.Screen
+        <Tab.Screen 
           name="Mecânica"
           options={{
-            tabBarIcon: ({ color }) => <Ionicons name="cog" size={18} color={color} />,
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="cog" size={20} color={color} />
+            ),
           }}
         >
           {() => <CategoriaTab categoriaKey="mecanica" titulo="Materiais - Mecânica" readOnly={readOnly} />}
         </Tab.Screen>
 
-        <Tab.Screen
+        <Tab.Screen 
           name="Pintura"
           options={{
-            tabBarIcon: ({ color }) => <Ionicons name="color-palette" size={18} color={color} />,
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="color-palette" size={20} color={color} />
+            ),
           }}
         >
           {() => <CategoriaTab categoriaKey="pintura" titulo="Materiais - Pintura" readOnly={readOnly} />}
         </Tab.Screen>
 
-        <Tab.Screen
+        <Tab.Screen 
           name="Porcas e Arruelas"
           options={{
-            tabBarIcon: ({ color }) => <Ionicons name="cog-outline" size={18} color={color} />,
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="hardware-chip" size={20} color={color} />
+            ),
           }}
         >
           {() => (
@@ -345,10 +353,12 @@ export default function EstoqueScreen({ route }) {
           )}
         </Tab.Screen>
 
-        <Tab.Screen
+        <Tab.Screen 
           name="Outros"
           options={{
-            tabBarIcon: ({ color }) => <Ionicons name="construct" size={18} color={color} />,
+            tabBarIcon: ({ color }) => (
+              <Ionicons name="apps" size={20} color={color} />
+            ),
           }}
         >
           {() => <CategoriaTab categoriaKey="Outros" titulo="Materiais - Outros" readOnly={readOnly} />}
@@ -358,7 +368,7 @@ export default function EstoqueScreen({ route }) {
   );
 }
 
-/* ------------------------- ESTILOS (mantive os seus) ------------------------- */
+/* ------------------------- ESTILOS ------------------------- */
 const styles = StyleSheet.create({
   header: {
     backgroundColor: "#0b5394",

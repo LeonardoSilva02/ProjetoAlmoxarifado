@@ -14,8 +14,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import DashboardADM from "../screens/DashboardADM";
 import EstoqueScreen from "../screens/EstoqueScreen";
 import FerramentasScreen from "../screens/FerramentasScreen";
-import EstoqueHondaScreen from "../screens/EstoqueHondaScreen"; // ✅ renomeado corretamente
-import FerramentasHondaScreen from "../screens/FerramentasHondaScreen";
+import EstoqueHondaView from "../screens/EstoqueHondaView"; // ✅ Versão de visualização para ADM
+import FerramentasHondaView from "../screens/FerramentasHondaView"; // ✅ Versão de visualização para ADM
 
 const Drawer = createDrawerNavigator();
 
@@ -125,9 +125,9 @@ export default function DrawerNavigator() {
       {/* 🔹 Corrigido: agora a rota se chama “EstoqueHonda” */}
       <Drawer.Screen
         name="EstoqueHonda"
-        component={EstoqueHondaScreen}
+        component={EstoqueHondaView}
         options={{
-          title: "Estoque Honda",
+          title: "Estoque Honda (Visualização)",
           drawerIcon: ({ color }) => (
             <Ionicons name="business-outline" color={color} size={20} />
           ),
@@ -136,9 +136,9 @@ export default function DrawerNavigator() {
 
       <Drawer.Screen
         name="FerramentasHonda"
-        component={FerramentasHondaScreen}
+        component={FerramentasHondaView}
         options={{
-          title: "Ferramentas Honda",
+          title: "Ferramentas Honda (Visualização)",
           drawerIcon: ({ color }) => (
             <Ionicons name="build-outline" color={color} size={20} />
           ),

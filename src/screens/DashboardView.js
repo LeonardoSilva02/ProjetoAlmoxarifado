@@ -20,7 +20,7 @@ export default function DashboardView({ navigation }) {
       {/* 🔹 Cabeçalho */}
       <LinearGradient colors={["#06437a", "#0b5394"]} style={styles.header}>
         <Text style={styles.headerTitle}>Painel de Visualização</Text>
-        <Text style={styles.subText}>Modo somente leitura (Google)</Text>
+        <Text style={styles.subText}>Modo somente leitura</Text>
       </LinearGradient>
 
       {/* 🔹 Cards de navegação */}

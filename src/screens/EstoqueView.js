@@ -27,11 +27,13 @@ export default function EstoqueView() {
 
   return (
     <View style={styles.container}>
+      {/* Cabeçalho */}
       <View style={styles.header}>
-        <Ionicons name="cube-outline" size={22} color="#fff" />
+        <Ionicons name="hardware-outline" size={22} color="#fff" />
         <Text style={styles.headerTitle}>Estoque (Visualização)</Text>
       </View>
 
+      {/* Barra de busca */}
       <View style={styles.searchRow}>
         <Ionicons name="search" size={18} color="#666" />
         <TextInput
@@ -43,6 +45,7 @@ export default function EstoqueView() {
         />
       </View>
 
+      {/* Lista de itens */}
       <FlatList
         data={itensFiltrados}
         keyExtractor={(i) => i.id}

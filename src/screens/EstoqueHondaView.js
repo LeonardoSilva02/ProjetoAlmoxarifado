@@ -1,20 +1,16 @@
-// src/screens/AlmoxarifadoHondaScreen.js
+// src/screens/EstoqueHondaView.js
 import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   FlatList,
-  Modal,
   TextInput,
-  Alert,
   Platform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { Ionicons } from "@expo/vector-icons";
-import { format } from "date-fns";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -26,19 +22,9 @@ function CategoriaTab({ categoriaKey, titulo }) {
   const [itens, setItens] = useState([]);
   const [busca, setBusca] = useState("");
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
-  const [nome, setNome] = useState("");
-  const [quantidade, setQuantidade] = useState("");
-  const [minimo, setMinimo] = useState("");
-
   useEffect(() => {
     carregar();
   }, []);
-
-  useEffect(() => {
-    salvar(itens);
-  }, [itens]);
 
   const carregar = async () => {
     try {
@@ -47,69 +33,6 @@ function CategoriaTab({ categoriaKey, titulo }) {
     } catch (e) {
       console.log("Erro carregar estoque", e);
     }
-  };
-
-  const salvar = async (data) => {
-    try {
-      await AsyncStorage.setItem(storageKey, JSON.stringify(data));
-    } catch (e) {
-      console.log("Erro salvar estoque", e);
-    }
-  };
-
-  const abrirModalNovo = () => {
-    setEditingItem(null);
-    setNome("");
-    setQuantidade("");
-    setMinimo("");
-    setModalVisible(true);
-  };
-
-  const abrirModalEditar = (item) => {
-    setEditingItem(item);
-    setNome(item.nome);
-    setQuantidade(String(item.quantidade));
-    setMinimo(String(item.minimo));
-    setModalVisible(true);
-  };
-
-  const confirmarSalvar = () => {
-    if (!nome.trim() || !quantidade || !minimo) {
-      Alert.alert("Preencha todos os campos");
-      return;
-    }
-
-    if (editingItem) {
-      const novo = itens.map((it) =>
-        it.id === editingItem.id
-          ? { ...it, nome: nome.trim(), quantidade: parseInt(quantidade), minimo: parseInt(minimo) }
-          : it
-      );
-      setItens(novo);
-    } else {
-      const now = new Date();
-      const novo = {
-        id: Date.now().toString(),
-        nome: nome.trim(),
-        quantidade: parseInt(quantidade),
-        minimo: parseInt(minimo),
-        criadoEm: now.toISOString(),
-      };
-      setItens([novo, ...itens]);
-    }
-
-    setModalVisible(false);
-  };
-
-  const deletar = (item) => {
-    Alert.alert("Excluir item", `Excluir "${item.nome}"?`, [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Excluir",
-        style: "destructive",
-        onPress: () => setItens((prev) => prev.filter((i) => i.id !== item.id)),
-      },
-    ]);
   };
 
   const getEstoqueColor = (it) => {
@@ -124,7 +47,7 @@ function CategoriaTab({ categoriaKey, titulo }) {
 
   const renderItem = ({ item }) => {
     const cor = getEstoqueColor(item);
-    const criado = item.criadoEm ? format(new Date(item.criadoEm), "dd/MM/yyyy HH:mm") : "-";
+    const criado = item.criadoEm ? new Date(item.criadoEm).toLocaleString() : "-";
     return (
       <View style={[styles.card, item.quantidade <= item.minimo && styles.cardLow]}>
         <View style={{ flex: 1 }}>
@@ -134,16 +57,6 @@ function CategoriaTab({ categoriaKey, titulo }) {
           </Text>
           <Text style={styles.meta}>Criado: {criado}</Text>
           {item.quantidade <= item.minimo && <Text style={styles.warning}>⚠ Abaixo do mínimo</Text>}
-        </View>
-
-        {/* Apenas editar e excluir (sem + e -) */}
-        <View style={styles.cardActions}>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => abrirModalEditar(item)}>
-            <Ionicons name="pencil" size={22} color="#0b5394" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => deletar(item)}>
-            <Ionicons name="trash" size={22} color="#777" />
-          </TouchableOpacity>
         </View>
       </View>
     );
@@ -179,62 +92,6 @@ function CategoriaTab({ categoriaKey, titulo }) {
           contentContainerStyle={{ paddingBottom: 120 }}
         />
       )}
-
-      <TouchableOpacity style={styles.fab} onPress={abrirModalNovo}>
-        <Ionicons name="add" size={30} color="#fff" />
-      </TouchableOpacity>
-
-      {/* Modal */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>
-              {editingItem ? "Editar Item" : "Novo Item"}
-            </Text>
-
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Nome do item"
-              placeholderTextColor="#999"
-              value={nome}
-              onChangeText={setNome}
-            />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Quantidade inicial"
-              placeholderTextColor="#999"
-              keyboardType="numeric"
-              value={quantidade}
-              onChangeText={setQuantidade}
-            />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Estoque mínimo"
-              placeholderTextColor="#999"
-              keyboardType="numeric"
-              value={minimo}
-              onChangeText={setMinimo}
-            />
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: "#ccc" }]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={{ color: "#333", fontWeight: "700" }}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: "#0b5394" }]}
-                onPress={confirmarSalvar}
-              >
-                <Text style={{ color: "#fff", fontWeight: "700" }}>
-                  {editingItem ? "Salvar" : "Adicionar"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -242,12 +99,12 @@ function CategoriaTab({ categoriaKey, titulo }) {
 /* -------------------------
    Tela principal
 ------------------------- */
-export default function AlmoxarifadoHondaScreen() {
+export default function EstoqueHondaView() {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.header}>
         <Ionicons name="business" size={22} color="#fff" style={{ marginRight: 8 }} />
-        <Text style={styles.headerTitle}>Almoxarifado Honda</Text>
+        <Text style={styles.headerTitle}>Almoxarifado Honda (Visualização)</Text>
       </View>
 
       <Tab.Navigator
@@ -366,54 +223,4 @@ const styles = StyleSheet.create({
   itemName: { fontSize: 16, fontWeight: "700", color: "#222", marginBottom: 6 },
   meta: { color: "#666", fontSize: 13 },
   warning: { color: "#ff4d4d", marginTop: 6, fontWeight: "700" },
-  cardActions: { flexDirection: "row", alignItems: "center", marginLeft: 12 },
-  iconBtn: { marginLeft: 8 },
-  fab: {
-    position: "absolute",
-    right: 18,
-    bottom: 22,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: "#0b5394",
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 8,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalCard: {
-    width: "88%",
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    padding: 18,
-    elevation: 12,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#0b5394",
-    marginBottom: 12,
-  },
-  modalInput: {
-    backgroundColor: "#f3f6ff",
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#e6eaf5",
-    color: "#333",
-  },
-  modalActions: { flexDirection: "row", justifyContent: "space-between", marginTop: 6 },
-  modalBtn: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 10,
-    alignItems: "center",
-    marginHorizontal: 6,
-  },
 });
