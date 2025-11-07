@@ -1,0 +1,13 @@
+# Padroniza finais de linha como LF no repositório
+* text=auto eol=lf
+
+# Mantém arquivos binários intactos
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.keystore binary
+
+# Evitar normalização indevida em lockfiles (já costumam ser texto puro)
+package-lock.json text eol=lf
