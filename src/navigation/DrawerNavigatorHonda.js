@@ -7,7 +7,8 @@ import {
   DrawerItem,
 } from "@react-navigation/drawer";
 import { Ionicons } from "@expo/vector-icons";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Platform } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from "expo-linear-gradient";
 
 // 🔹 Telas
@@ -16,27 +17,29 @@ import EstoqueScreen from "../screens/EstoqueScreen"; // ✅ Estoque Masters (vi
 import FerramentasScreen from "../screens/FerramentasScreen"; // ✅ Ferramentas Masters (visualização)
 import EstoqueHondaScreen from "../screens/EstoqueHondaScreen"; // ✅ Estoque Honda (acesso completo)
 import FerramentasHondaScreen from "../screens/FerramentasHondaScreen"; // ✅ Ferramentas Honda (acesso completo)
+import RequisicoesScreen from "../screens/RequisicoesScreen"; // ✅ Requisições de Material
+import RequisicaoForm from "../screens/RequisicaoForm";
 
 const Drawer = createDrawerNavigator();
 
 function CustomDrawerContent(props) {
   return (
-    <DrawerContentScrollView
-      {...props}
-      contentContainerStyle={{ flex: 1, backgroundColor: "#f8faff" }}
-    >
-      <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
-        <View style={styles.profileCircle}>
-          <Ionicons name="person-circle-outline" size={70} color="#fff" />
+    <View style={{ flex: 1, backgroundColor: '#f8faff' }}>
+      <DrawerContentScrollView {...props} contentContainerStyle={{ padding: 0 }}>
+        <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
+          <View style={styles.profileCircle}>
+            <Ionicons name="person-circle-outline" size={70} color="#fff" />
+          </View>
+          <Text style={styles.userName}>ADM Honda</Text>
+          <Text style={styles.userEmail}>adm.honda@empresa.com</Text>
+        </LinearGradient>
+
+        <View style={styles.drawerItems}>
+          <DrawerItemList {...props} />
         </View>
-        <Text style={styles.userName}>ADM Honda</Text>
-        <Text style={styles.userEmail}>adm.honda@empresa.com</Text>
-      </LinearGradient>
+      </DrawerContentScrollView>
 
-      <View style={styles.drawerItems}>
-        <DrawerItemList {...props} />
-      </View>
-
+      {/* Footer fixo fora da área rolável - evita sobreposição em listas longas */}
       <View style={styles.footer}>
         <View style={styles.separator} />
         <DrawerItem
@@ -46,11 +49,22 @@ function CustomDrawerContent(props) {
           icon={({ size }) => (
             <Ionicons name="exit-outline" color="#fff" size={size} />
           )}
-          onPress={() => props.navigation.navigate("Login")}
+          onPress={async () => {
+            // Limpa sessão antes de voltar ao Login
+            try {
+              await AsyncStorage.removeItem('userRole');
+              await AsyncStorage.removeItem('loginType');
+              await AsyncStorage.removeItem('isLoggedIn');
+              await AsyncStorage.removeItem('userEmail');
+            } catch (e) {
+              console.log('Erro ao limpar sessão:', e);
+            }
+            props.navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+          }}
         />
         <Text style={styles.versionText}>Versão 1.0.0</Text>
       </View>
-    </DrawerContentScrollView>
+    </View>
   );
 }
 
@@ -63,19 +77,26 @@ export default function DrawerNavigatorHonda() {
         headerStyle: { backgroundColor: "#0b5394" },
         headerTintColor: "#fff",
         headerTitleAlign: "center",
-        drawerType: "front",
+  drawerType: Platform.OS === 'web' ? 'front' : 'back',
         drawerActiveBackgroundColor: "#0b5394",
         drawerActiveTintColor: "#fff",
         drawerInactiveTintColor: "#444",
         drawerLabelStyle: {
-          fontSize: 14,
-          fontWeight: "600",
-          marginLeft: -10,
+          fontSize: 13,
+          fontWeight: "500",
+          marginLeft: 4,
+          lineHeight: 16,
         },
         drawerItemStyle: {
-          marginVertical: 0,
+          marginVertical: 2,
           borderRadius: 8,
-          paddingVertical: 0,
+          paddingVertical: 8,
+          marginHorizontal: 8,
+          height: 44,
+          justifyContent: 'flex-start',
+        },
+        drawerContentStyle: {
+          paddingLeft: 6,
         },
         sceneContainerStyle: { backgroundColor: "#f4f7fc" },
       }}
@@ -91,14 +112,13 @@ export default function DrawerNavigatorHonda() {
           ),
         }}
       />
-
       {/* Estoque Masters - Somente visualização */}
       <Drawer.Screen
         name="EstoqueMasters"
         component={EstoqueScreen}
         initialParams={{ readOnly: true }}
         options={{
-          title: "Estoque Masters (visualizar)",
+          title: "Estoque Masters",
           drawerIcon: ({ color }) => (
             <Ionicons name="cube-outline" color={color} size={20} />
           ),
@@ -111,7 +131,7 @@ export default function DrawerNavigatorHonda() {
         component={FerramentasScreen}
         initialParams={{ readOnly: true }}
         options={{
-          title: "Ferramentas Masters (visualizar)",
+          title: "Ferramentas Masters",
           drawerIcon: ({ color }) => (
             <Ionicons name="construct-outline" color={color} size={20} />
           ),
@@ -139,6 +159,26 @@ export default function DrawerNavigatorHonda() {
           drawerIcon: ({ color }) => (
             <Ionicons name="build-outline" color={color} size={20} />
           ),
+        }}
+      />
+
+      {/* Requisições de Material */}
+      <Drawer.Screen
+        name="Requisicoes"
+        component={RequisicoesScreen}
+        options={{
+          title: "Requisições",
+          drawerIcon: ({ color }) => (
+            <Ionicons name="document-text-outline" color={color} size={20} />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="RequisicaoForm"
+        component={RequisicaoForm}
+        options={{
+          title: "Formulário de Requisição",
+          drawerItemStyle: { height: 0 },
         }}
       />
     </Drawer.Navigator>
@@ -175,8 +215,8 @@ const styles = StyleSheet.create({
   },
   drawerItems: {
     flex: 1,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
   },
   separator: {
     borderTopWidth: 1,

@@ -76,13 +76,7 @@ export default function DashboardADM({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={() => navigation.navigate("Login")}
-      >
-        <Ionicons name="exit-outline" size={22} color="#fff" />
-        <Text style={styles.logoutText}>Sair</Text>
-      </TouchableOpacity>
+      {/* Botão de sair removido para visual mais limpo segundo solicitação */}
     </ScrollView>
   );
 }
@@ -131,20 +125,5 @@ const styles = StyleSheet.create({
     color: "#0b5394",
     fontWeight: "600",
     textAlign: "center",
-  },
-  logoutButton: {
-    flexDirection: "row",
-    backgroundColor: "#ff4d4d",
-    borderRadius: 10,
-    padding: 12,
-    marginHorizontal: 40,
-    marginTop: 20,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  logoutText: {
-    color: "#fff",
-    fontWeight: "bold",
-    marginLeft: 8,
   },
 });

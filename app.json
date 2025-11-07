@@ -2,6 +2,9 @@
   "expo": {
   "name": "Almoxarifado Master´s",
   "slug": "ProjetoAlmoxarifado",
+  "web": {
+    "favicon": "./assets/logo-masters.png"
+  },
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo-masters.png",
@@ -28,7 +31,12 @@
     "ios": {
       "bundleIdentifier": "com.leonardosilva02.ProjetoAlmoxarifado",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "LSSupportsOpeningDocumentsInPlace": true,
+        "UIFileSharingEnabled": true,
+        "UISupportsDocumentBrowser": true,
+        "NSPhotoLibraryUsageDescription": "Necessário para salvar os arquivos exportados na galeria",
+        "NSDocumentsUsageDescription": "Necessário para salvar os arquivos exportados"
       }
     }
   }

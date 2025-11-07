@@ -14,6 +14,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
+import { exportarFerramentasParaExcel } from '../utils/exportUtils';
 
 export default function FerramentasHondaScreen() {
   const [ferramentas, setFerramentas] = useState([]);
@@ -28,6 +29,41 @@ export default function FerramentasHondaScreen() {
   const [local, setLocal] = useState("");
 
   const STORAGE_KEY = "@ferramentas_honda_data";
+  const STORAGE_KEY_GERAL = "@ferramentas_data";
+
+  const exportarPlanilha = async () => {
+    try {
+      // Carregar dados das ferramentas gerais
+      const rawGeral = await AsyncStorage.getItem(STORAGE_KEY_GERAL);
+      const ferramentasGerais = rawGeral ? JSON.parse(rawGeral) : [];
+      
+      // Exportar
+      const resultado = await exportarFerramentasParaExcel(ferramentasGerais, ferramentas);
+      
+      if (resultado) {
+        if (Platform.OS === 'web') {
+          Alert.alert("Sucesso", "Planilha exportada com sucesso!");
+        } else {
+          // No mobile, a mensagem de sucesso só aparece se o usuário realmente compartilhou
+          Alert.alert("Sucesso", "Planilha compartilhada com sucesso!");
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao exportar planilha:", error);
+      
+      // Mensagens de erro específicas
+      if (error.message === 'Não há ferramentas cadastradas para exportar.') {
+        Alert.alert("Aviso", "Não há ferramentas cadastradas para exportar.");
+      } else if (Platform.OS === 'web') {
+        Alert.alert("Erro", "Não foi possível exportar a planilha. Tente novamente.");
+      } else {
+        Alert.alert(
+          "Erro ao Compartilhar",
+          "Não foi possível compartilhar a planilha. Verifique as permissões do aplicativo e tente novamente."
+        );
+      }
+    }
+  };
 
   useEffect(() => {
     carregar();
@@ -173,6 +209,9 @@ export default function FerramentasHondaScreen() {
       <View style={styles.header}>
         <Ionicons name="construct" size={22} color="#fff" style={{ marginRight: 8 }} />
         <Text style={styles.headerTitle}>Ferramentas Honda</Text>
+        <TouchableOpacity onPress={exportarPlanilha} style={styles.exportButton}>
+          <Ionicons name="download-outline" size={22} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.searchRow}>
@@ -285,6 +324,10 @@ export default function FerramentasHondaScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f7fb", padding: 12 },
+  exportButton: {
+    marginLeft: 'auto',
+    padding: 8,
+  },
   header: {
     backgroundColor: "#0b5394",
     paddingTop: Platform.OS === "ios" ? 50 : 25,
@@ -331,7 +374,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#0b5394",
     alignItems: "center",
     justifyContent: "center",
-    elevation: 8,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: {
+          width: 0,
+          height: 4,
+        },
+        shadowOpacity: 0.30,
+        shadowRadius: 4.65,
+      },
+      android: {
+        elevation: 8,
+      },
+      web: {
+        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+      }
+    }),
   },
   modalOverlay: {
     flex: 1,

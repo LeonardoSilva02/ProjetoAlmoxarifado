@@ -1,13 +1,37 @@
 // src/screens/FerramentasView.js
 import React, { useEffect, useState } from "react";
-import { View, Text, TextInput, FlatList, StyleSheet } from "react-native";
+import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import { exportarFerramentasParaExcel } from '../utils/exportUtils';
 
 export default function FerramentasView() {
   const [ferramentas, setFerramentas] = useState([]);
   const [busca, setBusca] = useState("");
   const STORAGE_KEY = "@ferramentas_data";
+  const STORAGE_KEY_HONDA = "@ferramentas_honda_data";
+
+  const exportarPlanilha = async () => {
+    try {
+      // Carregar dados das ferramentas Honda
+      const rawHonda = await AsyncStorage.getItem(STORAGE_KEY_HONDA);
+      const ferramentasHonda = rawHonda ? JSON.parse(rawHonda) : [];
+      
+      // Exportar
+      await exportarFerramentasParaExcel(ferramentas, ferramentasHonda);
+      Alert.alert("Sucesso", "Planilha exportada com sucesso!");
+    } catch (error) {
+      console.error("Erro ao exportar planilha:", error);
+      if (Platform.OS !== 'web') {
+        Alert.alert(
+          "Exportação não disponível",
+          "Para exportar a planilha, por favor acesse o sistema pela versão web."
+        );
+      } else {
+        Alert.alert("Erro", "Não foi possível exportar a planilha. Tente novamente.");
+      }
+    }
+  };
 
   useEffect(() => {
     const carregar = async () => {
@@ -38,7 +62,10 @@ export default function FerramentasView() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Ionicons name="construct-outline" size={22} color="#fff" />
-        <Text style={styles.headerTitle}>Ferramentas (Visualização)</Text>
+        <Text style={styles.headerTitle}>Ferramentas</Text>
+        <TouchableOpacity onPress={exportarPlanilha} style={styles.exportButton}>
+          <Ionicons name="download-outline" size={22} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.searchRow}>
@@ -75,13 +102,18 @@ export default function FerramentasView() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f7fb", padding: 12 },
+  exportButton: {
+    marginLeft: 'auto',
+    padding: 8,
+  },
   header: {
     backgroundColor: "#0b5394",
-    paddingTop: 40,
+    paddingTop: Platform.OS === "ios" ? 50 : 25,
     paddingBottom: 12,
     paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
+    elevation: 6,
   },
   headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold", marginLeft: 8 },
   searchRow: {

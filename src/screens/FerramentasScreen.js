@@ -13,6 +13,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
+import { exportarFerramentasParaExcel } from '../utils/exportUtils';
 
 export default function FerramentasScreen({ route }) {
   const readOnly = route?.params?.readOnly ?? false;
@@ -29,6 +30,7 @@ export default function FerramentasScreen({ route }) {
   const [local, setLocal] = useState(""); // Novo campo
 
   const STORAGE_KEY = "@ferramentas_data";
+  const STORAGE_KEY_HONDA = "@ferramentas_honda_data";
 
   useEffect(() => {
     carregar();
@@ -44,6 +46,28 @@ export default function FerramentasScreen({ route }) {
       if (raw) setFerramentas(JSON.parse(raw));
     } catch (e) {
       console.log("Erro ao carregar ferramentas", e);
+    }
+  };
+
+  const exportarPlanilha = async () => {
+    try {
+      // Carregar dados das ferramentas Honda
+      const rawHonda = await AsyncStorage.getItem(STORAGE_KEY_HONDA);
+      const ferramentasHonda = rawHonda ? JSON.parse(rawHonda) : [];
+      
+      // Exportar
+      await exportarFerramentasParaExcel(ferramentas, ferramentasHonda);
+      Alert.alert("Sucesso", "Planilha exportada com sucesso!");
+    } catch (error) {
+      console.error("Erro ao exportar planilha:", error);
+      if (Platform.OS !== 'web') {
+        Alert.alert(
+          "Exportação não disponível",
+          "Para exportar a planilha, por favor acesse o sistema pela versão web."
+        );
+      } else {
+        Alert.alert("Erro", "Não foi possível exportar a planilha. Tente novamente.");
+      }
     }
   };
 
@@ -182,7 +206,9 @@ export default function FerramentasScreen({ route }) {
       <View style={styles.header}>
         <Ionicons name="construct" size={22} color="#fff" style={{ marginRight: 8 }} />
         <Text style={styles.headerTitle}>Ferramentas e Equipamentos</Text>
-        {readOnly && <Text style={{ color: "#fff", marginLeft: 10, fontWeight: "700" }}>(Somente visualização)</Text>}
+        <TouchableOpacity onPress={exportarPlanilha} style={styles.exportButton}>
+          <Ionicons name="download-outline" size={22} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.searchRow}>
@@ -287,6 +313,10 @@ export default function FerramentasScreen({ route }) {
 /* =================== estilos (mantive os seus) =================== */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f7fb", padding: 12 },
+  exportButton: {
+    marginLeft: 'auto',
+    padding: 8,
+  },
   header: {
     backgroundColor: "#0b5394",
     paddingTop: Platform.OS === "ios" ? 50 : 25,

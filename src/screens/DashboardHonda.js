@@ -1,73 +1,87 @@
 // src/screens/DashboardHonda.js
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
 export default function DashboardHonda({ navigation }) {
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.container}>
       <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
         <Text style={styles.headerTitle}>Painel Honda</Text>
         <Text style={styles.subText}>Visualize e gerencie os estoques</Text>
       </LinearGradient>
 
-      <View style={styles.grid}>
-        {/* 🔹 Estoque Masters — somente visualização */}
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate("EstoqueMasters", { readOnly: true })}
-        >
-          <Ionicons name="cube-outline" size={40} color="#0b5394" />
-          <Text style={styles.cardText}>Estoque Masters</Text>
-          <Text style={styles.subCardText}>(visualização)</Text>
-        </TouchableOpacity>
+      <View style={styles.contentContainer}>
+        <View style={styles.mainContent}>
+          <View style={styles.grid}>
+            {/* 🔹 Estoque Masters — somente visualização */}
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => navigation.navigate("EstoqueMasters", { readOnly: true })}
+            >
+              <Ionicons name="cube-outline" size={40} color="#0b5394" />
+              <Text style={styles.cardText}>Estoque Masters</Text>
+              <Text style={styles.subCardText}>(visualização)</Text>
+            </TouchableOpacity>
 
-        {/* 🔹 Ferramentas Masters — somente visualização */}
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate("FerramentasMasters", { readOnly: true })}
-        >
-          <Ionicons name="construct-outline" size={40} color="#0b5394" />
-          <Text style={styles.cardText}>Ferramentas Masters</Text>
-          <Text style={styles.subCardText}>(visualização)</Text>
-        </TouchableOpacity>
+            {/* 🔹 Ferramentas Masters — somente visualização */}
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => navigation.navigate("FerramentasMasters", { readOnly: true })}
+            >
+              <Ionicons name="construct-outline" size={40} color="#0b5394" />
+              <Text style={styles.cardText}>Ferramentas Masters</Text>
+              <Text style={styles.subCardText}>(visualização)</Text>
+            </TouchableOpacity>
 
-        {/* 🔹 Estoque Honda — acesso completo */}
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate("EstoqueHonda")}
-        >
-          <Ionicons name="business-outline" size={40} color="#0b5394" />
-          <Text style={styles.cardText}>Estoque Honda</Text>
-        </TouchableOpacity>
+            {/* 🔹 Estoque Honda — acesso completo */}
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => navigation.navigate("EstoqueHonda")}
+            >
+              <Ionicons name="business-outline" size={40} color="#0b5394" />
+              <Text style={styles.cardText}>Estoque Honda</Text>
+            </TouchableOpacity>
 
-        {/* 🔹 Ferramentas Honda — acesso completo */}
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate("FerramentasHonda")}
-        >
-          <Ionicons name="build-outline" size={40} color="#0b5394" />
-          <Text style={styles.cardText}>Ferramentas Honda</Text>
-        </TouchableOpacity>
+            {/* 🔹 Ferramentas Honda — acesso completo */}
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => navigation.navigate("FerramentasHonda")}
+            >
+              <Ionicons name="build-outline" size={40} color="#0b5394" />
+              <Text style={styles.cardText}>Ferramentas Honda</Text>
+            </TouchableOpacity>
+
+            {/* 🔹 Requisições */}
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => navigation.navigate("Requisicoes")}
+            >
+              <Ionicons name="document-text-outline" size={40} color="#0b5394" />
+              <Text style={styles.cardText}>Requisições</Text>
+              <Text style={styles.subCardText}>criar & gerenciar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
-
-      <TouchableOpacity
-        style={styles.logoutButton}
-        onPress={() => navigation.navigate("Login")}
-      >
-        <Ionicons name="exit-outline" size={22} color="#fff" />
-        <Text style={styles.logoutText}>Sair</Text>
-      </TouchableOpacity>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
+    flex: 1,
     backgroundColor: "#f4f7fc",
+  },
+  contentContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
     paddingBottom: 20,
+  },
+  mainContent: {
+    flex: 1,
   },
   header: {
     paddingVertical: 50,
@@ -87,48 +101,35 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-around",
-    paddingHorizontal: 10,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
   },
   card: {
-    backgroundColor: "#fff",
-    width: "42%",
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 30,
-    marginVertical: 10,
-    elevation: 3,
-    shadowColor: "#000",
+    backgroundColor: '#fff',
+    width: '46%',
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 22,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.12,
     shadowRadius: 2,
   },
   cardText: {
-    marginTop: 8,
-    color: "#0b5394",
-    fontWeight: "700",
-    textAlign: "center",
+    marginTop: 6,
+    color: '#0b5394',
+    fontWeight: '700',
+    fontSize: 14,
+    textAlign: 'center',
   },
   subCardText: {
-    fontSize: 12,
-    color: "#666",
-  },
-  logoutButton: {
-    flexDirection: "row",
-    backgroundColor: "#ff4d4d",
-    borderRadius: 10,
-    padding: 12,
-    marginHorizontal: 40,
-    marginTop: 20,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  logoutText: {
-    color: "#fff",
-    fontWeight: "bold",
-    marginLeft: 8,
+    fontSize: 11,
+    color: '#666',
+    marginTop: 2,
   },
 });

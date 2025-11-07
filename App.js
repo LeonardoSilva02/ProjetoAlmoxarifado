@@ -51,9 +51,35 @@ import DrawerNavigatorView from "./src/navigation/DrawerNavigatorView"; // Visua
 const Stack = createStackNavigator();
 
 export default function App() {
-  // Sempre inicia na tela de Login; a própria `LoginScreen` fará redirecionamento
-  // automático se já houver sessão válida.
-  const initialRoute = "Login";
+  // Restauração de sessão: define a rota inicial com base no AsyncStorage
+  const [initialRoute, setInitialRoute] = React.useState('Login');
+  const [loadingInitialRoute, setLoadingInitialRoute] = React.useState(true);
+
+  React.useEffect(() => {
+    const restore = async () => {
+      try {
+        // Só considera sessão válida se existir um tipo de login salvo (manual/guest/etc.)
+        const loginType = await AsyncStorage.getItem('loginType');
+        const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
+        if (!loginType && isLoggedIn !== 'true') {
+          // não está logado — mostra Login
+          setInitialRoute('Login');
+        } else {
+          const role = await AsyncStorage.getItem('userRole');
+          if (role === 'admin') setInitialRoute('DrawerNavigator');
+          else if (role === 'adminHonda') setInitialRoute('DrawerNavigatorHonda');
+          else if (role === 'viewer') setInitialRoute('DrawerNavigatorView');
+          else setInitialRoute('Login');
+        }
+      } catch (e) {
+        console.log('Erro ao restaurar sessão:', e);
+        setInitialRoute('Login');
+      } finally {
+        setLoadingInitialRoute(false);
+      }
+    };
+    restore();
+  }, []);
 
   // Linking config para web: mapeia rotas para URLs, assim o F5 mantém a rota atual
   // Apenas use window.location.origin quando rodando no web; em Android/iOS
@@ -140,6 +166,16 @@ export default function App() {
       },
     },
   };
+
+  if (loadingInitialRoute) {
+    return (
+      <ErrorBoundary>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#0b5394" />
+        </View>
+      </ErrorBoundary>
+    );
+  }
 
   return (
     <ErrorBoundary>
