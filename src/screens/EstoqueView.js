@@ -1,25 +1,31 @@
 // src/screens/EstoqueView.js
 import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, StyleSheet, TextInput } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import { supabase } from "../services/supabase";
 
 export default function EstoqueView() {
   const [itens, setItens] = useState([]);
   const [busca, setBusca] = useState("");
-  const STORAGE_KEY = "@estoque_data";
 
   useEffect(() => {
-    const carregar = async () => {
-      try {
-        const raw = await AsyncStorage.getItem(STORAGE_KEY);
-        if (raw) setItens(JSON.parse(raw));
-      } catch (e) {
-        console.log("Erro ao carregar estoque:", e);
-      }
-    };
     carregar();
   }, []);
+
+  const carregar = async () => {
+    const { data, error } = await supabase
+      .from("estoque_itens")
+      .select("*")
+      .eq("obra", "masters")
+      .order("nome", { ascending: true });
+
+    if (error) {
+      console.log("Erro ao carregar estoque (view):", error);
+      return;
+    }
+
+    setItens(data || []);
+  };
 
   const itensFiltrados = itens.filter((i) =>
     i.nome?.toLowerCase().includes(busca.toLowerCase())
@@ -48,24 +54,30 @@ export default function EstoqueView() {
       {/* Lista de itens */}
       <FlatList
         data={itensFiltrados}
-        keyExtractor={(i) => i.id}
+        keyExtractor={(i) => i.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.card}>
             <Text style={styles.nome}>{item.nome}</Text>
             <Text style={styles.meta}>Quantidade: {item.quantidade}</Text>
-            <Text style={styles.meta}>Categoria: {item.categoria}</Text>
+            <Text style={styles.meta}>
+              Categoria: {item.categoria?.toUpperCase()}
+            </Text>
           </View>
         )}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>Nenhum item encontrado.</Text>
+          <Text style={styles.emptyText}>
+            Nenhum item encontrado.
+          </Text>
         }
       />
     </View>
   );
 }
 
+/* ------------------------- ESTILOS ------------------------- */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f7fb", padding: 12 },
+
   header: {
     backgroundColor: "#0b5394",
     paddingTop: 40,
@@ -74,7 +86,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
+
   headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold", marginLeft: 8 },
+
   searchRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -83,7 +97,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginVertical: 10,
   },
+
   searchInput: { marginLeft: 8, flex: 1, height: 40, color: "#333" },
+
   card: {
     backgroundColor: "#fff",
     padding: 14,
@@ -91,7 +107,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     elevation: 2,
   },
+
   nome: { fontWeight: "bold", color: "#0b5394", fontSize: 16 },
   meta: { color: "#555" },
+
   emptyText: { textAlign: "center", color: "#777", marginTop: 40 },
 });

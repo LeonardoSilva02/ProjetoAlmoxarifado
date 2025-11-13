@@ -1,14 +1,22 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function DashboardView({ navigation }) {
-  // 🔹 Função de logout segura
-  const handleLogout = () => {
-    // Se estiver usando AsyncStorage para salvar login:
-    // await AsyncStorage.removeItem("userData");
+  const [role, setRole] = useState("viewer");
 
+  useEffect(() => {
+    const loadRole = async () => {
+      const userRole = await AsyncStorage.getItem("userRole");
+      setRole(userRole || "viewer"); // sempre viewer aqui
+    };
+    loadRole();
+  }, []);
+
+  const handleLogout = async () => {
+    await AsyncStorage.clear();
     navigation.reset({
       index: 0,
       routes: [{ name: "Login" }],
@@ -17,15 +25,16 @@ export default function DashboardView({ navigation }) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* 🔹 Cabeçalho */}
+      {/* Cabeçalho */}
       <LinearGradient colors={["#06437a", "#0b5394"]} style={styles.header}>
         <Text style={styles.headerTitle}>Painel de Visualização</Text>
         <Text style={styles.subText}>Modo somente leitura</Text>
       </LinearGradient>
 
-      {/* 🔹 Cards de navegação */}
+      {/* Cards */}
       <View style={styles.grid}>
-        {/* Masters */}
+
+        {/* Masters - Estoque */}
         <TouchableOpacity
           style={styles.card}
           onPress={() => navigation.navigate("EstoqueMasters", { readOnly: true })}
@@ -35,6 +44,7 @@ export default function DashboardView({ navigation }) {
           <Text style={styles.subCardText}>(visualização)</Text>
         </TouchableOpacity>
 
+        {/* Masters – Ferramentas */}
         <TouchableOpacity
           style={styles.card}
           onPress={() => navigation.navigate("FerramentasMasters", { readOnly: true })}
@@ -44,7 +54,7 @@ export default function DashboardView({ navigation }) {
           <Text style={styles.subCardText}>(visualização)</Text>
         </TouchableOpacity>
 
-        {/* Honda */}
+        {/* Honda – Estoque */}
         <TouchableOpacity
           style={styles.card}
           onPress={() => navigation.navigate("EstoqueHonda", { readOnly: true })}
@@ -54,6 +64,7 @@ export default function DashboardView({ navigation }) {
           <Text style={styles.subCardText}>(visualização)</Text>
         </TouchableOpacity>
 
+        {/* Honda – Ferramentas */}
         <TouchableOpacity
           style={styles.card}
           onPress={() => navigation.navigate("FerramentasHonda", { readOnly: true })}
@@ -62,13 +73,15 @@ export default function DashboardView({ navigation }) {
           <Text style={styles.cardText}>Ferramentas Honda</Text>
           <Text style={styles.subCardText}>(visualização)</Text>
         </TouchableOpacity>
+
       </View>
 
-      {/* 🔹 Logout */}
+      {/* Logout */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Ionicons name="exit-outline" size={22} color="#fff" />
         <Text style={styles.logoutText}>Sair</Text>
       </TouchableOpacity>
+
     </ScrollView>
   );
 }
@@ -111,10 +124,6 @@ const styles = StyleSheet.create({
     paddingVertical: 30,
     marginVertical: 10,
     elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
   },
   cardText: {
     marginTop: 8,

@@ -11,18 +11,17 @@ import {
   Alert,
   Platform,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { format } from "date-fns";
+import { supabase } from "../services/supabase";
 
 const Tab = createMaterialTopTabNavigator();
 
 /* -------------------------
-   CategoriaTab (com AsyncStorage)
-   ------------------------- */
+   CategoriaTab (SUPABASE)
+------------------------- */
 function CategoriaTab({ categoriaKey, titulo, readOnly }) {
-  const storageKey = `@estoque_${categoriaKey}`;
   const [itens, setItens] = useState([]);
   const [busca, setBusca] = useState("");
 
@@ -32,34 +31,33 @@ function CategoriaTab({ categoriaKey, titulo, readOnly }) {
   const [quantidade, setQuantidade] = useState("");
   const [minimo, setMinimo] = useState("");
 
+  // Carregar do Supabase
+  const carregar = async () => {
+    const { data, error } = await supabase
+      .from("estoque_itens")
+      .select("*")
+      .eq("categoria", categoriaKey)
+      .eq("obra", "masters")
+      .order("id", { ascending: false });
+
+    if (error) {
+      console.log("Erro carregar estoque (masters):", error);
+      return;
+    }
+
+    setItens(data || []);
+  };
+
   useEffect(() => {
     carregar();
   }, []);
 
-  useEffect(() => {
-    salvar(itens);
-  }, [itens]);
-
-  const carregar = async () => {
-    try {
-      const raw = await AsyncStorage.getItem(storageKey);
-      if (raw) setItens(JSON.parse(raw));
-    } catch (e) {
-      console.log("Erro carregar estoque", e);
-    }
-  };
-
-  const salvar = async (data) => {
-    try {
-      await AsyncStorage.setItem(storageKey, JSON.stringify(data));
-    } catch (e) {
-      console.log("Erro salvar estoque", e);
-    }
-  };
-
   const abrirModalNovo = () => {
     if (readOnly) {
-      Alert.alert("Acesso somente leitura", "Você não tem permissão para adicionar itens aqui.");
+      Alert.alert(
+        "Acesso somente leitura",
+        "Você não tem permissão para adicionar itens aqui."
+      );
       return;
     }
     setEditingItem(null);
@@ -71,7 +69,10 @@ function CategoriaTab({ categoriaKey, titulo, readOnly }) {
 
   const abrirModalEditar = (item) => {
     if (readOnly) {
-      Alert.alert("Acesso somente leitura", "Você não tem permissão para editar aqui.");
+      Alert.alert(
+        "Acesso somente leitura",
+        "Você não tem permissão para editar aqui."
+      );
       return;
     }
     setEditingItem(item);
@@ -81,59 +82,140 @@ function CategoriaTab({ categoriaKey, titulo, readOnly }) {
     setModalVisible(true);
   };
 
-  const confirmarSalvar = () => {
+  const confirmarSalvar = async () => {
     if (!nome.trim() || !quantidade || !minimo) {
       Alert.alert("Preencha todos os campos");
       return;
     }
 
+    const qtdNum = parseInt(quantidade, 10);
+    const minNum = parseInt(minimo, 10);
+
+    if (Number.isNaN(qtdNum) || Number.isNaN(minNum)) {
+      Alert.alert("Quantidade e mínimo devem ser números válidos");
+      return;
+    }
+
+    // Editar
     if (editingItem) {
-      const novo = itens.map((it) =>
-        it.id === editingItem.id
-          ? { ...it, nome: nome.trim(), quantidade: parseInt(quantidade), minimo: parseInt(minimo) }
-          : it
+      const { data, error } = await supabase
+        .from("estoque_itens")
+        .update({
+          nome: nome.trim(),
+          quantidade: qtdNum,
+          minimo: minNum,
+        })
+        .eq("id", editingItem.id)
+        .select();
+
+      if (error) {
+        console.log("Erro ao atualizar item:", error);
+        Alert.alert("Erro", "Não foi possível salvar as alterações.");
+        return;
+      }
+
+      // Atualiza local
+      setItens((prev) =>
+        prev.map((it) =>
+          it.id === editingItem.id
+            ? { ...it, nome: nome.trim(), quantidade: qtdNum, minimo: minNum }
+            : it
+        )
       );
-      setItens(novo);
     } else {
-      const now = new Date();
+      // Novo
       const novo = {
-        id: Date.now().toString(),
         nome: nome.trim(),
-        quantidade: parseInt(quantidade),
-        minimo: parseInt(minimo),
-        criadoEm: now.toISOString(),
+        quantidade: qtdNum,
+        minimo: minNum,
+        categoria: categoriaKey,
+        obra: "masters",
+        criado_em: new Date().toISOString(),
       };
-      setItens([novo, ...itens]);
+
+      const { data, error } = await supabase
+        .from("estoque_itens")
+        .insert([novo])
+        .select();
+
+      if (error) {
+        console.log("Erro ao adicionar item:", error);
+        Alert.alert("Erro", "Não foi possível adicionar o item.");
+        return;
+      }
+
+      if (data && data[0]) {
+        setItens((prev) => [data[0], ...prev]);
+      }
     }
 
     setModalVisible(false);
   };
 
-  const deletar = (item) => {
+  const deletar = async (item) => {
     if (readOnly) {
-      Alert.alert("Acesso somente leitura", "Você não tem permissão para excluir aqui.");
+      Alert.alert(
+        "Acesso somente leitura",
+        "Você não tem permissão para excluir aqui."
+      );
       return;
     }
-    Alert.alert("Excluir item", `Excluir "${item.nome}"?`, [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Excluir",
-        style: "destructive",
-        onPress: () => setItens((prev) => prev.filter((i) => i.id !== item.id)),
-      },
-    ]);
+
+    const confirmar =
+      Platform.OS === "web"
+        ? window.confirm(`Excluir "${item.nome}"?`)
+        : await new Promise((resolve) => {
+            Alert.alert("Excluir item", `Excluir "${item.nome}"?`, [
+              { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
+              {
+                text: "Excluir",
+                style: "destructive",
+                onPress: () => resolve(true),
+              },
+            ]);
+          });
+
+    if (!confirmar) return;
+
+    const { error } = await supabase
+      .from("estoque_itens")
+      .delete()
+      .eq("id", item.id);
+
+    if (error) {
+      console.log("Erro ao excluir item:", error);
+      Alert.alert("Erro", "Não foi possível excluir o item.");
+      return;
+    }
+
+    setItens((prev) => prev.filter((i) => i.id !== item.id));
   };
 
-  const alterarQuantidade = (item, delta) => {
+  const alterarQuantidade = async (item, delta) => {
     if (readOnly) {
-      Alert.alert("Acesso somente leitura", "Você não pode alterar quantidades aqui.");
+      Alert.alert(
+        "Acesso somente leitura",
+        "Você não pode alterar quantidades aqui."
+      );
       return;
     }
+
+    const novoValor = Math.max(0, (item.quantidade || 0) + delta);
+
+    const { error } = await supabase
+      .from("estoque_itens")
+      .update({ quantidade: novoValor })
+      .eq("id", item.id);
+
+    if (error) {
+      console.log("Erro ao alterar quantidade:", error);
+      Alert.alert("Erro", "Não foi possível alterar a quantidade.");
+      return;
+    }
+
     setItens((prev) =>
       prev.map((it) =>
-        it.id === item.id
-          ? { ...it, quantidade: Math.max(0, it.quantidade + delta) }
-          : it
+        it.id === item.id ? { ...it, quantidade: novoValor } : it
       )
     );
   };
@@ -145,37 +227,73 @@ function CategoriaTab({ categoriaKey, titulo, readOnly }) {
   };
 
   const itensFiltrados = itens.filter((it) =>
-    it.nome.toLowerCase().includes(busca.toLowerCase())
+    it.nome?.toLowerCase().includes(busca.toLowerCase())
   );
 
   const renderItem = ({ item }) => {
     const cor = getEstoqueColor(item);
-    const criado = item.criadoEm ? format(new Date(item.criadoEm), "dd/MM/yyyy HH:mm") : "-";
+    const criado = item.criado_em
+      ? format(new Date(item.criado_em), "dd/MM/yyyy HH:mm")
+      : "-";
+
     return (
       <View style={[styles.card, item.quantidade <= item.minimo && styles.cardLow]}>
         <View style={{ flex: 1 }}>
           <Text style={styles.itemName}>{item.nome}</Text>
           <Text style={styles.meta}>
-            Qtd: <Text style={{ color: cor, fontWeight: "700" }}>{item.quantidade}</Text> • Mínimo: {item.minimo}
+            Qtd:{" "}
+            <Text style={{ color: cor, fontWeight: "700" }}>
+              {item.quantidade}
+            </Text>{" "}
+            • Mínimo: {item.minimo}
           </Text>
           <Text style={styles.meta}>Criado: {criado}</Text>
-          {item.quantidade <= item.minimo && <Text style={styles.warning}>⚠ Abaixo do mínimo</Text>}
+          {item.quantidade <= item.minimo && (
+            <Text style={styles.warning}>⚠ Abaixo do mínimo</Text>
+          )}
         </View>
 
         {/* Botões aparecem só para ADM */}
         {!readOnly && (
           <View style={styles.cardActions}>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => alterarQuantidade(item, 1)}>
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => alterarQuantidade(item, 1)}
+            >
               <Ionicons name="add-circle" size={28} color="#0b5394" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => alterarQuantidade(item, -1)}>
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => alterarQuantidade(item, -1)}
+            >
               <Ionicons name="remove-circle" size={28} color="#ff4d4d" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => abrirModalEditar(item)}>
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => abrirModalEditar(item)}
+            >
               <Ionicons name="pencil" size={22} color="#0b5394" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => deletar(item)}>
-              <Ionicons name="trash" size={22} color="#777" />
+            <TouchableOpacity
+              style={[
+                styles.iconBtn,
+                {
+                  backgroundColor: "#ff0000",
+                  padding: 8,
+                  borderRadius: 6,
+                  minWidth: 40,
+                  minHeight: 40,
+                  justifyContent: "center",
+                  alignItems: "center",
+                },
+              ]}
+              onPress={() => {
+                console.log("=== CLIQUE DELETAR ESTOQUE MASTERS ===");
+                console.log("Item para deletar:", item.nome, "ID:", item.id);
+                deletar(item);
+              }}
+            >
+              <Ionicons name="trash" size={22} color="#fff" />
             </TouchableOpacity>
           </View>
         )}
@@ -208,7 +326,7 @@ function CategoriaTab({ categoriaKey, titulo, readOnly }) {
       ) : (
         <FlatList
           data={itensFiltrados}
-          keyExtractor={(i) => i.id}
+          keyExtractor={(i) => i.id.toString()}
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: 120 }}
         />
@@ -278,7 +396,7 @@ function CategoriaTab({ categoriaKey, titulo, readOnly }) {
 
 /* -------------------------
    Tela principal
-   ------------------------- */
+------------------------- */
 export default function EstoqueScreen({ route }) {
   const readOnly = route?.params?.readOnly ?? false;
 
@@ -303,7 +421,7 @@ export default function EstoqueScreen({ route }) {
           swipeEnabled: true,
         }}
       >
-        <Tab.Screen 
+        <Tab.Screen
           name="Elétrica"
           options={{
             tabBarIcon: ({ color }) => (
@@ -311,10 +429,16 @@ export default function EstoqueScreen({ route }) {
             ),
           }}
         >
-          {() => <CategoriaTab categoriaKey="eletrica" titulo="Materiais - Elétrica" readOnly={readOnly} />}
+          {() => (
+            <CategoriaTab
+              categoriaKey="eletrica"
+              titulo="Materiais - Elétrica"
+              readOnly={readOnly}
+            />
+          )}
         </Tab.Screen>
 
-        <Tab.Screen 
+        <Tab.Screen
           name="Mecânica"
           options={{
             tabBarIcon: ({ color }) => (
@@ -322,10 +446,16 @@ export default function EstoqueScreen({ route }) {
             ),
           }}
         >
-          {() => <CategoriaTab categoriaKey="mecanica" titulo="Materiais - Mecânica" readOnly={readOnly} />}
+          {() => (
+            <CategoriaTab
+              categoriaKey="mecanica"
+              titulo="Materiais - Mecânica"
+              readOnly={readOnly}
+            />
+          )}
         </Tab.Screen>
 
-        <Tab.Screen 
+        <Tab.Screen
           name="Pintura"
           options={{
             tabBarIcon: ({ color }) => (
@@ -333,10 +463,16 @@ export default function EstoqueScreen({ route }) {
             ),
           }}
         >
-          {() => <CategoriaTab categoriaKey="pintura" titulo="Materiais - Pintura" readOnly={readOnly} />}
+          {() => (
+            <CategoriaTab
+              categoriaKey="pintura"
+              titulo="Materiais - Pintura"
+              readOnly={readOnly}
+            />
+          )}
         </Tab.Screen>
 
-        <Tab.Screen 
+        <Tab.Screen
           name="Porcas e Arruelas"
           options={{
             tabBarIcon: ({ color }) => (
@@ -353,7 +489,7 @@ export default function EstoqueScreen({ route }) {
           )}
         </Tab.Screen>
 
-        <Tab.Screen 
+        <Tab.Screen
           name="Outros"
           options={{
             tabBarIcon: ({ color }) => (
@@ -361,7 +497,13 @@ export default function EstoqueScreen({ route }) {
             ),
           }}
         >
-          {() => <CategoriaTab categoriaKey="Outros" titulo="Materiais - Outros" readOnly={readOnly} />}
+          {() => (
+            <CategoriaTab
+              categoriaKey="outros"
+              titulo="Materiais - Outros"
+              readOnly={readOnly}
+            />
+          )}
         </Tab.Screen>
       </Tab.Navigator>
     </View>

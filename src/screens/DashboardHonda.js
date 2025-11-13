@@ -1,22 +1,60 @@
 // src/screens/DashboardHonda.js
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function DashboardHonda({ navigation }) {
+  const [role, setRole] = useState("viewer");
+
+  useEffect(() => {
+    const loadRole = async () => {
+      const userRole = await AsyncStorage.getItem("userRole");
+      setRole(userRole || "viewer");
+    };
+    loadRole();
+  }, []);
+
+  const isViewer = role === "viewer";
+  const isHonda = role === "adminHonda";
+  const isAdmin = role === "admin";
+
+  const handleMastersViewOnly = (screen) => {
+    if (isViewer) {
+      Alert.alert("Acesso restrito", "Visitantes só podem visualizar.");
+      return;
+    }
+    navigation.navigate(screen, { readOnly: true });
+  };
+
+  const handleHondaFullAccess = (screen) => {
+    if (isViewer) {
+      Alert.alert("Acesso restrito", "Visitantes só podem visualizar.");
+      return;
+    }
+    navigation.navigate(screen);
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
         <Text style={styles.headerTitle}>Painel Honda</Text>
-        <Text style={styles.subText}>Visualize e gerencie os estoques</Text>
+
+        <Text style={styles.subText}>
+          {role === "viewer"
+            ? "Modo visitante (visualização)"
+            : role === "adminHonda"
+            ? "Acesso total — Honda"
+            : "Administrador (Masters + Honda)"}
+        </Text>
       </LinearGradient>
 
       <View style={styles.grid}>
         {/* 🔹 Estoque Masters — somente visualização */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("EstoqueMasters", { readOnly: true })}
+          onPress={() => handleMastersViewOnly("EstoqueMasters")}
         >
           <Ionicons name="cube-outline" size={40} color="#0b5394" />
           <Text style={styles.cardText}>Estoque Masters</Text>
@@ -26,7 +64,7 @@ export default function DashboardHonda({ navigation }) {
         {/* 🔹 Ferramentas Masters — somente visualização */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("FerramentasMasters", { readOnly: true })}
+          onPress={() => handleMastersViewOnly("FerramentasMasters")}
         >
           <Ionicons name="construct-outline" size={40} color="#0b5394" />
           <Text style={styles.cardText}>Ferramentas Masters</Text>
@@ -36,7 +74,7 @@ export default function DashboardHonda({ navigation }) {
         {/* 🔹 Estoque Honda — acesso completo */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("EstoqueHonda")}
+          onPress={() => handleHondaFullAccess("EstoqueHonda")}
         >
           <Ionicons name="business-outline" size={40} color="#0b5394" />
           <Text style={styles.cardText}>Estoque Honda</Text>
@@ -45,16 +83,20 @@ export default function DashboardHonda({ navigation }) {
         {/* 🔹 Ferramentas Honda — acesso completo */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("FerramentasHonda")}
+          onPress={() => handleHondaFullAccess("FerramentasHonda")}
         >
           <Ionicons name="build-outline" size={40} color="#0b5394" />
           <Text style={styles.cardText}>Ferramentas Honda</Text>
         </TouchableOpacity>
       </View>
 
+      {/* 🔻 Logout */}
       <TouchableOpacity
         style={styles.logoutButton}
-        onPress={() => navigation.navigate("Login")}
+        onPress={async () => {
+          await AsyncStorage.clear();
+          navigation.reset({ index: 0, routes: [{ name: "Login" }] });
+        }}
       >
         <Ionicons name="exit-outline" size={22} color="#fff" />
         <Text style={styles.logoutText}>Sair</Text>
@@ -101,10 +143,6 @@ const styles = StyleSheet.create({
     paddingVertical: 30,
     marginVertical: 10,
     elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
   },
   cardText: {
     marginTop: 8,

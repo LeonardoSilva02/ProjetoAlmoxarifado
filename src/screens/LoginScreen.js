@@ -16,42 +16,63 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-// Google login removido — usar 'Entrar como visitante' para visualização pública
+import { supabase } from "../services/supabase"; // 🔥 Certo agora
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const currentYear = new Date().getFullYear();
 
-  // Google login removido. Se quiser reativar mais tarde, podemos integrar de novo.
-
-  // ✅ Login manual
+  // ==========================
+  // 🚀 LOGIN VIA SUPABASE
+  // ==========================
   const handleLogin = async () => {
     try {
-      if (username === "adm" && password === "123") {
-        await AsyncStorage.setItem("userRole", "admin");
-        await AsyncStorage.setItem("loginType", "manual");
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "DrawerNavigator" }],
-        });
-      } else if (username === "admHonda" && password === "123") {
-        await AsyncStorage.setItem("userRole", "adminHonda");
-        await AsyncStorage.setItem("loginType", "manual");
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "DrawerNavigatorHonda" }],
-        });
-      } else {
-        Alert.alert("Erro", "Usuário ou senha incorretos ❌");
+      if (!username.trim() || !password.trim()) {
+        Alert.alert("Erro", "Preencha todos os campos.");
+        return;
       }
-    } catch (error) {
-      console.log("Erro no login:", error);
+
+      // 🔥 Agora busca pelo EMAIL (correto)
+      const { data, error } = await supabase
+        .from("usuarios")
+        .select("*")
+        .eq("email", username.trim())
+        .single();
+
+      if (error || !data) {
+        Alert.alert("Erro", "Usuário não encontrado ❌");
+        return;
+      }
+
+      // Validar senha simples (igual ao Supabase)
+      if (password.trim() !== data.senha_hash) {
+        Alert.alert("Erro", "Senha incorreta ❌");
+        return;
+      }
+
+      // Guardar infos do usuário
+      await AsyncStorage.setItem("userRole", data.role);
+      await AsyncStorage.setItem("loginType", "supabase");
+      await AsyncStorage.setItem("userId", data.id);
+
+      // Direcionar pela role
+      if (data.role === "admin") {
+        navigation.reset({ index: 0, routes: [{ name: "DrawerNavigator" }] });
+      } else if (data.role === "adminHonda") {
+        navigation.reset({ index: 0, routes: [{ name: "DrawerNavigatorHonda" }] });
+      } else {
+        navigation.reset({ index: 0, routes: [{ name: "DrawerNavigatorView" }] });
+      }
+    } catch (err) {
+      console.log("Erro no login:", err);
+      Alert.alert("Erro", "Falha no login.");
     }
   };
 
-  // Nota: não redirecionamos automaticamente aqui — queremos sempre mostrar a tela de Login
-  // ✅ Animações
+  // ==========================
+  // Animações (igual o seu)
+  // ==========================
   const fadeLogo = useRef(new Animated.Value(0)).current;
   const fadeContent = useRef(new Animated.Value(0)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
@@ -86,6 +107,7 @@ export default function LoginScreen({ navigation }) {
     inputRange: [0, 1],
     outputRange: ["#0b5394", "#1a73e8"],
   });
+
   const bg2 = gradientAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ["#042e5f", "#155db8"],
@@ -100,7 +122,7 @@ export default function LoginScreen({ navigation }) {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.inner}
       >
-        {/* 🔹 Logo */}
+        {/* Logo */}
         <Animated.View style={[styles.logoContainer, { opacity: fadeLogo }]}>
           <Image
             source={require("../../assets/logo-masters.png")}
@@ -110,7 +132,7 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.appName}>Sistema de Almoxarifado</Text>
         </Animated.View>
 
-        {/* 🔹 Card de login */}
+        {/* Card */}
         <Animated.View style={[styles.card, { opacity: fadeContent }]}>
           <Text style={styles.title}>Bem-vindo 👋</Text>
           <Text style={styles.subtitle}>Acesse com suas credenciais</Text>
@@ -119,7 +141,7 @@ export default function LoginScreen({ navigation }) {
             <Ionicons name="person-outline" size={22} color="#0b5394" />
             <TextInput
               style={styles.input}
-              placeholder="Usuário"
+              placeholder="Email"
               placeholderTextColor="#999"
               value={username}
               onChangeText={setUsername}
@@ -139,7 +161,7 @@ export default function LoginScreen({ navigation }) {
             />
           </View>
 
-          {/* 🔹 Botão de login */}
+          {/* Botão login */}
           <Animated.View style={{ transform: [{ scale: buttonScale }], width: "100%" }}>
             <TouchableOpacity
               onPressIn={() =>
@@ -163,7 +185,7 @@ export default function LoginScreen({ navigation }) {
             </TouchableOpacity>
           </Animated.View>
 
-          {/* 🔹 Entrar como visitante (visualização pública) */}
+          {/* Visitante */}
           <Animated.View style={{ transform: [{ scale: googleScale }], width: "100%" }}>
             <TouchableOpacity
               onPressIn={() =>
@@ -179,8 +201,6 @@ export default function LoginScreen({ navigation }) {
               }
               style={styles.googleButton}
               onPress={async () => {
-                // marca como viewer e navega para a visualização pública
-                await AsyncStorage.setItem("isLoggedIn", "true");
                 await AsyncStorage.setItem("userRole", "viewer");
                 await AsyncStorage.setItem("loginType", "guest");
                 navigation.reset({ index: 0, routes: [{ name: "DrawerNavigatorView" }] });
@@ -193,7 +213,6 @@ export default function LoginScreen({ navigation }) {
           </Animated.View>
         </Animated.View>
 
-        {/* 🔹 Rodapé */}
         <Animated.Text style={[styles.footerText, { opacity: fadeContent }]}>
           © {currentYear} Masters Engenharia
         </Animated.Text>
@@ -264,7 +283,6 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     elevation: 3,
   },
-  googleIcon: { width: 24, height: 24, marginRight: 10 },
   googleText: { color: "#444", fontSize: 16, fontWeight: "600" },
   footerText: { color: "#dce6f5", fontSize: 12, marginTop: 25 },
 });

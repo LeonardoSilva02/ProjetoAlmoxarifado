@@ -25,20 +25,35 @@ import FerramentasHondaView from "../screens/FerramentasHondaView";
 
 const Drawer = createDrawerNavigator();
 
+/* ============================================================
+   🔹 Drawer Personalizado — Visitante
+============================================================ */
 function CustomDrawerContent(props) {
-  const [email, setEmail] = useState(null);
+  const [userName, setUserName] = useState("Visitante");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("");
 
   useEffect(() => {
     const load = async () => {
       try {
-        const em = await AsyncStorage.getItem("userEmail");
-        if (em) setEmail(em);
+        const n = await AsyncStorage.getItem("userName");
+        const e = await AsyncStorage.getItem("userEmail");
+        const r = await AsyncStorage.getItem("userRole");
+
+        if (n) setUserName(n);
+        if (e) setEmail(e);
+        if (r) setRole(r);
       } catch (e) {
-        console.log("Erro ao carregar email:", e);
+        console.log("Erro ao carregar dados do visitante:", e);
       }
     };
     load();
   }, []);
+
+  const roleText =
+    role === "viewer"
+      ? "Modo Visitante"
+      : "Visualização";
 
   return (
     <DrawerContentScrollView
@@ -49,8 +64,10 @@ function CustomDrawerContent(props) {
         <View style={styles.profileCircle}>
           <Ionicons name="person-circle-outline" size={70} color="#fff" />
         </View>
-  <Text style={styles.userName}>Visualizador (Visitante)</Text>
-  <Text style={styles.userEmail}>{email ?? "Visitante"}</Text>
+
+        <Text style={styles.userName}>{userName}</Text>
+        <Text style={styles.userEmail}>{email || "Sem e-mail (visitante)"}</Text>
+        <Text style={styles.roleText}>{roleText}</Text>
       </LinearGradient>
 
       <View style={styles.drawerItems}>
@@ -58,16 +75,20 @@ function CustomDrawerContent(props) {
       </View>
 
       <View style={styles.footer}>
-        <View style={{ marginBottom: 8 }}>
-          <DrawerItem
-            label="Entrar / Login"
-            labelStyle={{ color: "#0b5394", fontWeight: "700" }}
-            icon={({ size }) => (
-              <Ionicons name="log-in-outline" color="#0b5394" size={size} />
-            )}
-            onPress={() => props.navigation.navigate("Login")}
-          />
-        </View>
+        <DrawerItem
+          label="Entrar / Login"
+          labelStyle={{ color: "#0b5394", fontWeight: "700" }}
+          icon={({ size }) => (
+            <Ionicons name="log-in-outline" color="#0b5394" size={size} />
+          )}
+          onPress={async () => {
+            await AsyncStorage.clear();
+            props.navigation.reset({
+              index: 0,
+              routes: [{ name: "Login" }],
+            });
+          }}
+        />
 
         <Text style={styles.versionText}>Versão 1.0.0</Text>
       </View>
@@ -75,6 +96,9 @@ function CustomDrawerContent(props) {
   );
 }
 
+/* ============================================================
+   🔹 Navegação (Somente Visualização)
+============================================================ */
 export default function DrawerNavigatorView() {
   return (
     <Drawer.Navigator
@@ -101,6 +125,7 @@ export default function DrawerNavigatorView() {
         sceneContainerStyle: { backgroundColor: "#f4f7fc" },
       }}
     >
+      {/* Painel principal */}
       <Drawer.Screen
         name="DashboardView"
         component={DashboardView}
@@ -112,6 +137,7 @@ export default function DrawerNavigatorView() {
         }}
       />
 
+      {/* Masters (somente visualizar) */}
       <Drawer.Screen
         name="EstoqueMasters"
         component={EstoqueScreen}
@@ -136,6 +162,7 @@ export default function DrawerNavigatorView() {
         }}
       />
 
+      {/* Honda (somente visualizar) */}
       <Drawer.Screen
         name="EstoqueHonda"
         component={EstoqueHondaView}
@@ -161,6 +188,9 @@ export default function DrawerNavigatorView() {
   );
 }
 
+/* ============================================================
+   🎨 Estilos
+============================================================ */
 const styles = StyleSheet.create({
   header: {
     paddingVertical: 40,
@@ -186,8 +216,14 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   userEmail: {
-    color: "#e0e0e0",
+    color: "#dce6f5",
     fontSize: 12,
+    marginTop: 2,
+  },
+  roleText: {
+    color: "#cfe0fb",
+    fontSize: 12,
+    marginTop: 4,
   },
   drawerItems: {
     flex: 1,

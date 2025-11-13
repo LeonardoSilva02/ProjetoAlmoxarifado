@@ -1,5 +1,5 @@
 // src/navigation/DrawerNavigatorHonda.js
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   createDrawerNavigator,
   DrawerContentScrollView,
@@ -9,36 +9,71 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // 🔹 Telas
 import DashboardHonda from "../screens/DashboardHonda";
-import EstoqueScreen from "../screens/EstoqueScreen"; // ✅ Estoque Masters (visualização)
-import FerramentasScreen from "../screens/FerramentasScreen"; // ✅ Ferramentas Masters (visualização)
-import EstoqueHondaScreen from "../screens/EstoqueHondaScreen"; // ✅ Estoque Honda (acesso completo)
-import FerramentasHondaScreen from "../screens/FerramentasHondaScreen"; // ✅ Ferramentas Honda (acesso completo)
+import EstoqueScreen from "../screens/EstoqueScreen"; 
+import FerramentasScreen from "../screens/FerramentasScreen"; 
+import EstoqueHondaScreen from "../screens/EstoqueHondaScreen"; 
+import FerramentasHondaScreen from "../screens/FerramentasHondaScreen"; 
 
 const Drawer = createDrawerNavigator();
 
+/* ============================================================
+   🔹 Drawer personalizado — agora com Supabase
+============================================================ */
 function CustomDrawerContent(props) {
+  const [nome, setNome] = useState("Carregando...");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("");
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const n = await AsyncStorage.getItem("userName");
+      const e = await AsyncStorage.getItem("userEmail");
+      const r = await AsyncStorage.getItem("userRole");
+
+      if (n) setNome(n);
+      if (e) setEmail(e);
+      if (r) setRole(r);
+    };
+
+    loadUser();
+  }, []);
+
+  const roleText =
+    role === "adminHonda"
+      ? "Administrador Honda"
+      : role === "admin"
+      ? "Administrador Masters"
+      : "Visitante";
+
   return (
     <DrawerContentScrollView
       {...props}
       contentContainerStyle={{ flex: 1, backgroundColor: "#f8faff" }}
     >
+      {/* 🔹 Cabeçalho com informações do usuário */}
       <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
         <View style={styles.profileCircle}>
           <Ionicons name="person-circle-outline" size={70} color="#fff" />
         </View>
-        <Text style={styles.userName}>ADM Honda</Text>
-        <Text style={styles.userEmail}>adm.honda@empresa.com</Text>
+
+        <Text style={styles.userName}>{nome}</Text>
+        <Text style={styles.userEmail}>{email}</Text>
+        <Text style={styles.userRole}>{roleText}</Text>
       </LinearGradient>
 
+      {/* 🔹 Lista de telas */}
       <View style={styles.drawerItems}>
         <DrawerItemList {...props} />
       </View>
 
+      {/* 🔹 Rodapé */}
       <View style={styles.footer}>
         <View style={styles.separator} />
+
         <DrawerItem
           label="Sair"
           labelStyle={styles.logoutLabel}
@@ -46,14 +81,24 @@ function CustomDrawerContent(props) {
           icon={({ size }) => (
             <Ionicons name="exit-outline" color="#fff" size={size} />
           )}
-          onPress={() => props.navigation.navigate("Login")}
+          onPress={async () => {
+            await AsyncStorage.clear();
+            props.navigation.reset({
+              index: 0,
+              routes: [{ name: "Login" }],
+            });
+          }}
         />
+
         <Text style={styles.versionText}>Versão 1.0.0</Text>
       </View>
     </DrawerContentScrollView>
   );
 }
 
+/* ============================================================
+   🔹 Drawer principal da Honda
+============================================================ */
 export default function DrawerNavigatorHonda() {
   return (
     <Drawer.Navigator
@@ -63,7 +108,6 @@ export default function DrawerNavigatorHonda() {
         headerStyle: { backgroundColor: "#0b5394" },
         headerTintColor: "#fff",
         headerTitleAlign: "center",
-        drawerType: "front",
         drawerActiveBackgroundColor: "#0b5394",
         drawerActiveTintColor: "#fff",
         drawerInactiveTintColor: "#444",
@@ -72,15 +116,9 @@ export default function DrawerNavigatorHonda() {
           fontWeight: "600",
           marginLeft: -10,
         },
-        drawerItemStyle: {
-          marginVertical: 0,
-          borderRadius: 8,
-          paddingVertical: 0,
-        },
         sceneContainerStyle: { backgroundColor: "#f4f7fc" },
       }}
     >
-      {/* Painel Honda */}
       <Drawer.Screen
         name="DashboardHonda"
         component={DashboardHonda}
@@ -92,7 +130,6 @@ export default function DrawerNavigatorHonda() {
         }}
       />
 
-      {/* Estoque Masters - Somente visualização */}
       <Drawer.Screen
         name="EstoqueMasters"
         component={EstoqueScreen}
@@ -105,7 +142,6 @@ export default function DrawerNavigatorHonda() {
         }}
       />
 
-      {/* Ferramentas Masters - Somente visualização */}
       <Drawer.Screen
         name="FerramentasMasters"
         component={FerramentasScreen}
@@ -118,7 +154,6 @@ export default function DrawerNavigatorHonda() {
         }}
       />
 
-      {/* Estoque Honda - acesso completo */}
       <Drawer.Screen
         name="EstoqueHonda"
         component={EstoqueHondaScreen}
@@ -130,7 +165,6 @@ export default function DrawerNavigatorHonda() {
         }}
       />
 
-      {/* Ferramentas Honda - acesso completo */}
       <Drawer.Screen
         name="FerramentasHonda"
         component={FerramentasHondaScreen}
@@ -145,13 +179,15 @@ export default function DrawerNavigatorHonda() {
   );
 }
 
+/* ============================================================
+   🎨 Estilos
+============================================================ */
 const styles = StyleSheet.create({
   header: {
     paddingVertical: 40,
     alignItems: "center",
     borderBottomLeftRadius: 25,
     borderBottomRightRadius: 25,
-    elevation: 5,
   },
   profileCircle: {
     width: 85,
@@ -173,14 +209,18 @@ const styles = StyleSheet.create({
     color: "#e0e0e0",
     fontSize: 12,
   },
+  userRole: {
+    color: "#c7d7f5",
+    fontSize: 12,
+    marginTop: 5,
+  },
   drawerItems: {
     flex: 1,
-    paddingVertical: 6,
     paddingHorizontal: 8,
   },
   separator: {
     borderTopWidth: 1,
-    borderTopColor: "#ddd",
+    borderTopColor: "#ccc",
     marginVertical: 8,
   },
   footer: {
@@ -202,6 +242,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 11,
     color: "#999",
-    marginTop: 8,
+    marginTop: 6,
   },
 });

@@ -8,32 +8,49 @@ import {
   TextInput,
   Platform,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { Ionicons } from "@expo/vector-icons";
+import { supabase } from "../services/supabase";
 
 const Tab = createMaterialTopTabNavigator();
 
-/* -------------------------
-   CategoriaTab (com AsyncStorage)
-------------------------- */
+/* ============================================
+      CategoriaTab – SOMENTE VISUALIZAÇÃO
+      (Agora usando Supabase)
+============================================ */
 function CategoriaTab({ categoriaKey, titulo }) {
-  const storageKey = `@honda_${categoriaKey}`;
   const [itens, setItens] = useState([]);
   const [busca, setBusca] = useState("");
 
+  // Carregar do Supabase
+  const carregar = async () => {
+    const { data, error } = await supabase
+      .from("estoque_itens")
+      .select("*")
+      .eq("categoria", categoriaKey)
+      .eq("obra", "honda")
+      .order("id", { ascending: false });
+
+    if (error) {
+      console.log("Erro ao carregar estoque (view):", error);
+      return;
+    }
+
+    setItens(data || []);
+  };
+
   useEffect(() => {
     carregar();
+
+    // Atualizar a cada 3 segundos para sincronizar
+    const interval = setInterval(carregar, 3000);
+    return () => clearInterval(interval);
   }, []);
 
-  const carregar = async () => {
-    try {
-      const raw = await AsyncStorage.getItem(storageKey);
-      if (raw) setItens(JSON.parse(raw));
-    } catch (e) {
-      console.log("Erro carregar estoque", e);
-    }
-  };
+  // Filtro de busca
+  const itensFiltrados = itens.filter((it) =>
+    it.nome?.toLowerCase().includes(busca.toLowerCase())
+  );
 
   const getEstoqueColor = (it) => {
     if (it.quantidade <= it.minimo) return "#ff4d4d";
@@ -41,22 +58,28 @@ function CategoriaTab({ categoriaKey, titulo }) {
     return "#4cd137";
   };
 
-  const itensFiltrados = itens.filter((it) =>
-    it.nome.toLowerCase().includes(busca.toLowerCase())
-  );
-
   const renderItem = ({ item }) => {
     const cor = getEstoqueColor(item);
-    const criado = item.criadoEm ? new Date(item.criadoEm).toLocaleString() : "-";
+    const criado = item.criado_em
+      ? new Date(item.criado_em).toLocaleString("pt-BR")
+      : "-";
+
     return (
       <View style={[styles.card, item.quantidade <= item.minimo && styles.cardLow]}>
         <View style={{ flex: 1 }}>
           <Text style={styles.itemName}>{item.nome}</Text>
+
           <Text style={styles.meta}>
-            Qtd: <Text style={{ color: cor, fontWeight: "700" }}>{item.quantidade}</Text> • Mínimo: {item.minimo}
+            Qtd:{" "}
+            <Text style={{ color: cor, fontWeight: "700" }}>{item.quantidade}</Text>{" "}
+            • Mínimo: {item.minimo}
           </Text>
+
           <Text style={styles.meta}>Criado: {criado}</Text>
-          {item.quantidade <= item.minimo && <Text style={styles.warning}>⚠ Abaixo do mínimo</Text>}
+
+          {item.quantidade <= item.minimo && (
+            <Text style={styles.warning}>⚠ Abaixo do mínimo</Text>
+          )}
         </View>
       </View>
     );
@@ -66,6 +89,7 @@ function CategoriaTab({ categoriaKey, titulo }) {
     <View style={styles.tabWrap}>
       <View style={styles.topRow}>
         <Text style={styles.tabTitle}>{titulo}</Text>
+
         <View style={styles.searchRow}>
           <Ionicons name="search" size={18} color="#666" />
           <TextInput
@@ -81,13 +105,15 @@ function CategoriaTab({ categoriaKey, titulo }) {
       {itensFiltrados.length === 0 ? (
         <View style={styles.emptyWrap}>
           <Text style={styles.emptyText}>
-            {busca ? "Nenhum item encontrado." : "Nenhum item cadastrado ainda."}
+            {busca
+              ? "Nenhum item encontrado."
+              : "Nenhum item cadastrado ainda."}
           </Text>
         </View>
       ) : (
         <FlatList
           data={itensFiltrados}
-          keyExtractor={(i) => i.id}
+          keyExtractor={(i) => i.id.toString()}
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: 120 }}
         />
@@ -96,15 +122,15 @@ function CategoriaTab({ categoriaKey, titulo }) {
   );
 }
 
-/* -------------------------
-   Tela principal
-------------------------- */
+/* ============================================
+      TELA PRINCIPAL (sem alterações)
+============================================ */
 export default function EstoqueHondaView() {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.header}>
         <Ionicons name="business" size={22} color="#fff" style={{ marginRight: 8 }} />
-        <Text style={styles.headerTitle}>Almoxarifado Honda (Visualização)</Text>
+        <Text style={styles.headerTitle}>Honda - Estoque (Visualização)</Text>
       </View>
 
       <Tab.Navigator
@@ -113,47 +139,21 @@ export default function EstoqueHondaView() {
           tabBarStyle: { backgroundColor: "#0b5394" },
           tabBarIndicatorStyle: { backgroundColor: "#fff" },
           tabBarLabelStyle: { fontSize: 13, fontWeight: "700" },
-          swipeEnabled: true,
         }}
       >
-        <Tab.Screen 
-          name="Elétrica"
-          options={{
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="flash" size={20} color={color} />
-            ),
-          }}
-        >
+        <Tab.Screen name="Elétrica">
           {() => <CategoriaTab categoriaKey="eletrica" titulo="Honda - Elétrica" />}
         </Tab.Screen>
-        <Tab.Screen 
-          name="Mecânica"
-          options={{
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="cog" size={20} color={color} />
-            ),
-          }}
-        >
+
+        <Tab.Screen name="Mecânica">
           {() => <CategoriaTab categoriaKey="mecanica" titulo="Honda - Mecânica" />}
         </Tab.Screen>
-        <Tab.Screen 
-          name="Pintura"
-          options={{
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="color-palette" size={20} color={color} />
-            ),
-          }}
-        >
+
+        <Tab.Screen name="Pintura">
           {() => <CategoriaTab categoriaKey="pintura" titulo="Honda - Pintura" />}
         </Tab.Screen>
-        <Tab.Screen 
-          name="Porcas e Arruelas"
-          options={{
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="hardware-chip" size={20} color={color} />
-            ),
-          }}
-        >
+
+        <Tab.Screen name="Porcas e Arruelas">
           {() => (
             <CategoriaTab
               categoriaKey="porcas_arruelas"
@@ -161,14 +161,8 @@ export default function EstoqueHondaView() {
             />
           )}
         </Tab.Screen>
-        <Tab.Screen 
-          name="Outros"
-          options={{
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="apps" size={20} color={color} />
-            ),
-          }}
-        >
+
+        <Tab.Screen name="Outros">
           {() => <CategoriaTab categoriaKey="outros" titulo="Honda - Outros" />}
         </Tab.Screen>
       </Tab.Navigator>
@@ -176,9 +170,9 @@ export default function EstoqueHondaView() {
   );
 }
 
-/* -------------------------
-   Estilos
-------------------------- */
+/* ============================================
+      ESTILOS (iguais ao seu original)
+============================================ */
 const styles = StyleSheet.create({
   header: {
     backgroundColor: "#0b5394",

@@ -6,39 +6,37 @@ import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function DashboardADM({ navigation }) {
-  const [isGoogleUser, setIsGoogleUser] = useState(false);
+  const [role, setRole] = useState("viewer");
 
   useEffect(() => {
-    // 🔹 Verifica se o login foi feito com Google
-    const checkLoginType = async () => {
-      const loginType = await AsyncStorage.getItem("loginType");
-      if (loginType === "google") {
-        setIsGoogleUser(true);
-      }
+    const loadRole = async () => {
+      const userRole = await AsyncStorage.getItem("userRole");
+      setRole(userRole || "viewer");
     };
-    checkLoginType();
+    loadRole();
   }, []);
 
-  const handleRestrictedAction = () => {
-    Alert.alert("Acesso restrito", "Você só pode visualizar as informações.");
-  };
+  const isViewer = role === "viewer";
 
   const handleNavigation = (screen) => {
-    if (isGoogleUser) {
-      // ✅ Pode navegar, mas apenas visualizar
-      navigation.navigate(screen, { readOnly: true });
-    } else {
-      // 🔧 ADM normal
-      navigation.navigate(screen);
+    if (isViewer) {
+      Alert.alert("Acesso restrito", "Seu acesso é somente para visualização.");
+      return;
     }
+    navigation.navigate(screen);
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
         <Text style={styles.headerTitle}>Painel Administrativo</Text>
+
         <Text style={styles.subText}>
-          {isGoogleUser ? "Modo de visualização" : "Gerencie os setores da empresa"}
+          {role === "viewer"
+            ? "Modo de visualização (visitante)"
+            : role === "adminHonda"
+            ? "Acesso: Honda"
+            : "Acesso: Masters"}
         </Text>
       </LinearGradient>
 
@@ -78,7 +76,10 @@ export default function DashboardADM({ navigation }) {
 
       <TouchableOpacity
         style={styles.logoutButton}
-        onPress={() => navigation.navigate("Login")}
+        onPress={async () => {
+          await AsyncStorage.clear();
+          navigation.reset({ index: 0, routes: [{ name: "Login" }] });
+        }}
       >
         <Ionicons name="exit-outline" size={22} color="#fff" />
         <Text style={styles.logoutText}>Sair</Text>

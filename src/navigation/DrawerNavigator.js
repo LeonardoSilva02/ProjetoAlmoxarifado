@@ -1,5 +1,5 @@
 // src/navigation/DrawerNavigator.js
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   createDrawerNavigator,
   DrawerContentScrollView,
@@ -9,35 +9,62 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // 🔹 Telas
 import DashboardADM from "../screens/DashboardADM";
 import EstoqueScreen from "../screens/EstoqueScreen";
 import FerramentasScreen from "../screens/FerramentasScreen";
-import EstoqueHondaView from "../screens/EstoqueHondaView"; // ✅ Versão de visualização para ADM
-import FerramentasHondaView from "../screens/FerramentasHondaView"; // ✅ Versão de visualização para ADM
+import EstoqueHondaView from "../screens/EstoqueHondaView";
+import FerramentasHondaView from "../screens/FerramentasHondaView";
 
 const Drawer = createDrawerNavigator();
 
 /* ============================================================
-   🔹 Drawer personalizado estilizado
+   🔹 Drawer personalizado (agora usando dados do Supabase)
 ============================================================ */
 function CustomDrawerContent(props) {
+  const [nome, setNome] = useState("Usuário");
+  const [email, setEmail] = useState("carregando...");
+  const [role, setRole] = useState("");
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const n = await AsyncStorage.getItem("userName");
+      const e = await AsyncStorage.getItem("userEmail");
+      const r = await AsyncStorage.getItem("userRole");
+
+      if (n) setNome(n);
+      if (e) setEmail(e);
+      if (r) setRole(r);
+    };
+    loadUser();
+  }, []);
+
+  const roleText =
+    role === "admin"
+      ? "Administrador (Masters)"
+      : role === "adminHonda"
+      ? "Administrador Honda"
+      : "Visitante";
+
   return (
     <DrawerContentScrollView
       {...props}
       contentContainerStyle={{ flex: 1, backgroundColor: "#f8faff" }}
     >
-      {/* 🔹 Cabeçalho com gradiente */}
+      {/* 🔹 Cabeçalho com dados reais */}
       <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
         <View style={styles.profileCircle}>
           <Ionicons name="person-circle-outline" size={70} color="#fff" />
         </View>
-        <Text style={styles.userName}>Administrador</Text>
-        <Text style={styles.userEmail}>adm@empresa.com</Text>
+
+        <Text style={styles.userName}>{nome}</Text>
+        <Text style={styles.userEmail}>{email}</Text>
+        <Text style={styles.userRole}>{roleText}</Text>
       </LinearGradient>
 
-      {/* Itens do Drawer */}
+      {/* 🔹 Itens */}
       <View style={styles.drawerItems}>
         <DrawerItemList {...props} />
       </View>
@@ -52,7 +79,13 @@ function CustomDrawerContent(props) {
           icon={({ size }) => (
             <Ionicons name="exit-outline" color="#fff" size={size} />
           )}
-          onPress={() => props.navigation.navigate("Login")}
+          onPress={async () => {
+            await AsyncStorage.clear();
+            props.navigation.reset({
+              index: 0,
+              routes: [{ name: "Login" }],
+            });
+          }}
         />
         <Text style={styles.versionText}>Versão 1.0.0</Text>
       </View>
@@ -61,7 +94,7 @@ function CustomDrawerContent(props) {
 }
 
 /* ============================================================
-   🔹 Navegação principal
+   🔹 Drawer principal (ADM)
 ============================================================ */
 export default function DrawerNavigator() {
   return (
@@ -122,7 +155,6 @@ export default function DrawerNavigator() {
         }}
       />
 
-      {/* 🔹 Corrigido: agora a rota se chama “EstoqueHonda” */}
       <Drawer.Screen
         name="EstoqueHonda"
         component={EstoqueHondaView}
@@ -149,7 +181,7 @@ export default function DrawerNavigator() {
 }
 
 /* ============================================================
-   🎨 Estilos aprimorados
+   🎨 Estilos
 ============================================================ */
 const styles = StyleSheet.create({
   header: {
@@ -177,6 +209,11 @@ const styles = StyleSheet.create({
   },
   userEmail: {
     color: "#e0e0e0",
+    fontSize: 12,
+  },
+  userRole: {
+    color: "#c7d7f5",
+    marginTop: 4,
     fontSize: 12,
   },
   drawerItems: {
