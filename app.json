@@ -1,35 +1,61 @@
 {
   "expo": {
-  "name": "Almoxarifado Master´s",
-  "slug": "ProjetoAlmoxarifado",
+    "name": "Almoxarifado Master´s",
+    "slug": "ProjetoAlmoxarifado",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo-masters.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "scheme": "almoxarifado-masters",
+    "newArchEnabled": false,
+
     "splash": {
       "image": "./assets/logo-masters.png",
       "resizeMode": "contain",
       "backgroundColor": "#0b5394"
     },
+
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo-masters.png",
         "backgroundColor": "#0b5394"
       },
-      "edgeToEdgeEnabled": true,
-      "package": "com.leonardosilva02.ProjetoAlmoxarifado"
+      "package": "com.leonardosilva02.ProjetoAlmoxarifado",
+      "permissions": [],
+      "softwareKeyboardLayoutMode": "pan"
     },
+
+    "ios": {
+      "bundleIdentifier": "com.leonardosilva02.ProjetoAlmoxarifado",
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+
+    "web": {
+      "favicon": "./assets/logo-masters.png",
+      "bundler": "metro",
+      "output": "static",
+      "backgroundColor": "#ffffff",
+      "meta": {
+        "viewport": "width=device-width, initial-scale=1, maximum-scale=1"
+      }
+    },
+
+    "experiments": {
+      "turboModules": false,
+      "reactServerComponents": false
+    },
+
     "extra": {
       "eas": {
         "projectId": "e53629f2-e5fa-4623-ab5c-61907c1aa295"
       }
     },
-    "ios": {
-      "bundleIdentifier": "com.leonardosilva02.ProjetoAlmoxarifado",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+
+    "updates": {
+      "fallbackToCacheTimeout": 0
     }
   }
 }
