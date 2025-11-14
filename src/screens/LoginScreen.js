@@ -21,7 +21,38 @@ import { supabase } from "../services/supabase"; // 🔥 Certo agora
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [isChecking, setIsChecking] = useState(true);
   const currentYear = new Date().getFullYear();
+
+  // ==========================
+  // 🔐 VERIFICAR SESSÃO EXISTENTE
+  // ==========================
+  useEffect(() => {
+    const verificarSessao = async () => {
+      try {
+        const userRole = await AsyncStorage.getItem("userRole");
+        
+        if (userRole) {
+          // Usuário já está logado, redirecionar para a tela correta
+          if (userRole === "admin") {
+            navigation.reset({ index: 0, routes: [{ name: "DrawerNavigator" }] });
+          } else if (userRole === "adminHonda") {
+            navigation.reset({ index: 0, routes: [{ name: "DrawerNavigatorHonda" }] });
+          } else {
+            navigation.reset({ index: 0, routes: [{ name: "DrawerNavigatorView" }] });
+          }
+        } else {
+          // Não há sessão, mostrar tela de login
+          setIsChecking(false);
+        }
+      } catch (error) {
+        console.log("Erro ao verificar sessão:", error);
+        setIsChecking(false);
+      }
+    };
+
+    verificarSessao();
+  }, [navigation]);
 
   // ==========================
   // 🚀 LOGIN VIA SUPABASE
@@ -80,10 +111,13 @@ export default function LoginScreen({ navigation }) {
   const gradientAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.sequence([
-      Animated.timing(fadeLogo, { toValue: 1, duration: 1500, useNativeDriver: true }),
-      Animated.timing(fadeContent, { toValue: 1, duration: 1000, useNativeDriver: true }),
-    ]).start();
+    // Só iniciar animações se não estiver verificando sessão
+    if (!isChecking) {
+      Animated.sequence([
+        Animated.timing(fadeLogo, { toValue: 1, duration: 1500, useNativeDriver: true }),
+        Animated.timing(fadeContent, { toValue: 1, duration: 1000, useNativeDriver: true }),
+      ]).start();
+    }
 
     Animated.loop(
       Animated.sequence([
@@ -101,7 +135,22 @@ export default function LoginScreen({ navigation }) {
         }),
       ])
     ).start();
-  }, []);
+  }, [isChecking]);
+
+  // Mostrar loading enquanto verifica sessão
+  if (isChecking) {
+    return (
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center", backgroundColor: "#0b5394" }]}>
+        <StatusBar barStyle="light-content" backgroundColor="#0b5394" />
+        <Image
+          source={require("../../assets/logo-masters.png")}
+          style={[styles.logo, { marginBottom: 20 }]}
+          resizeMode="contain"
+        />
+        <Text style={{ color: "#fff", fontSize: 16, marginBottom: 10 }}>Verificando sessão...</Text>
+      </View>
+    );
+  }
 
   const bg1 = gradientAnim.interpolate({
     inputRange: [0, 1],
