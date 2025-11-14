@@ -36,7 +36,7 @@
     "web": {
       "favicon": "./assets/logo-masters.png",
       "bundler": "metro",
-      "output": "static",
+      "output": "single",
       "backgroundColor": "#ffffff",
       "meta": {
         "viewport": "width=device-width, initial-scale=1, maximum-scale=1"
@@ -45,7 +45,8 @@
 
     "experiments": {
       "turboModules": false,
-      "reactServerComponents": false
+      "reactServerComponents": false,
+      "typedRoutes": false
     },
 
     "extra": {
