@@ -1,5 +1,13 @@
+// src/screens/DashboardView.js
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Image,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -10,7 +18,7 @@ export default function DashboardView({ navigation }) {
   useEffect(() => {
     const loadRole = async () => {
       const userRole = await AsyncStorage.getItem("userRole");
-      setRole(userRole || "viewer"); // sempre viewer aqui
+      setRole(userRole || "viewer");
     };
     loadRole();
   }, []);
@@ -25,60 +33,72 @@ export default function DashboardView({ navigation }) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Cabeçalho */}
+
+      {/* HEADER PREMIUM */}
       <LinearGradient colors={["#06437a", "#0b5394"]} style={styles.header}>
+        <Image
+          source={require("../../assets/logo-masters.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.headerTitle}>Painel de Visualização</Text>
-        <Text style={styles.subText}>Modo somente leitura</Text>
       </LinearGradient>
 
-      {/* Cards */}
+      {/* GRID DE CARDS */}
       <View style={styles.grid}>
 
-        {/* Masters - Estoque */}
+        {/* ESTOQUE MASTERS */}
         <TouchableOpacity
           style={styles.card}
           onPress={() => navigation.navigate("EstoqueMasters", { readOnly: true })}
         >
-          <Ionicons name="cube-outline" size={40} color="#0b5394" />
+          <View style={styles.iconCircle}>
+            <Ionicons name="cube-outline" size={36} color="#0b5394" />
+          </View>
           <Text style={styles.cardText}>Estoque Masters</Text>
           <Text style={styles.subCardText}>(visualização)</Text>
         </TouchableOpacity>
 
-        {/* Masters – Ferramentas */}
+        {/* FERRAMENTAS MASTERS */}
         <TouchableOpacity
           style={styles.card}
           onPress={() => navigation.navigate("FerramentasMasters", { readOnly: true })}
         >
-          <Ionicons name="construct-outline" size={40} color="#0b5394" />
-          <Text style={styles.cardText}>Ferramentas Masters</Text>
+          <View style={styles.iconCircle}>
+            <Ionicons name="construct-outline" size={36} color="#0b5394" />
+          </View>
+          <Text style={styles.cardText}>Ferramentas Elétricas Masters</Text>
           <Text style={styles.subCardText}>(visualização)</Text>
         </TouchableOpacity>
 
-        {/* Honda – Estoque */}
+        {/* ESTOQUE MASTERS/HONDA */}
         <TouchableOpacity
           style={styles.card}
           onPress={() => navigation.navigate("EstoqueHonda", { readOnly: true })}
         >
-          <Ionicons name="business-outline" size={40} color="#0b5394" />
-          <Text style={styles.cardText}>Estoque Honda</Text>
+          <View style={styles.iconCircle}>
+            <Ionicons name="business-outline" size={36} color="#0b5394" />
+          </View>
+          <Text style={styles.cardText}>Estoque Masters/Honda</Text>
           <Text style={styles.subCardText}>(visualização)</Text>
         </TouchableOpacity>
 
-        {/* Honda – Ferramentas */}
+        {/* FERRAMENTAS MASTERS/HONDA */}
         <TouchableOpacity
           style={styles.card}
           onPress={() => navigation.navigate("FerramentasHonda", { readOnly: true })}
         >
-          <Ionicons name="build-outline" size={40} color="#0b5394" />
-          <Text style={styles.cardText}>Ferramentas Honda</Text>
+          <View style={styles.iconCircle}>
+            <Ionicons name="build-outline" size={36} color="#0b5394" />
+          </View>
+          <Text style={styles.cardText}>Ferramentas Elétricas Masters/Honda</Text>
           <Text style={styles.subCardText}>(visualização)</Text>
         </TouchableOpacity>
-
       </View>
 
-      {/* Logout */}
+      {/* BOTÃO DE SAIR */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Ionicons name="exit-outline" size={22} color="#fff" />
+        <Ionicons name="exit-outline" size={24} color="#fff" />
         <Text style={styles.logoutText}>Sair</Text>
       </TouchableOpacity>
 
@@ -86,68 +106,99 @@ export default function DashboardView({ navigation }) {
   );
 }
 
+/* =====================
+        ESTILOS
+===================== */
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: "#f4f7fc",
-    paddingBottom: 20,
+    paddingBottom: 35,
   },
+
+  /* HEADER */
   header: {
-    paddingVertical: 50,
+    paddingVertical: 45,
     alignItems: "center",
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-    marginBottom: 20,
+    elevation: 10,
+    shadowColor: "#000",
+  },
+  logo: {
+    width: 180,
+    height: 80,
+    marginBottom: 8,
   },
   headerTitle: {
     color: "#fff",
     fontSize: 22,
     fontWeight: "800",
   },
-  subText: {
-    color: "#dce6f5",
-    fontSize: 14,
-    marginTop: 5,
-  },
+
+  /* GRID */
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-around",
-    paddingHorizontal: 10,
+    paddingHorizontal: 14,
+    marginTop: 10,
   },
+
+  /* CARD */
   card: {
+    width: "44%",
     backgroundColor: "#fff",
-    width: "42%",
-    borderRadius: 15,
+    borderRadius: 18,
+    paddingVertical: 26,
+    marginVertical: 12,
     alignItems: "center",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+
+  /* ÍCONE DENTRO DO CÍRCULO */
+  iconCircle: {
+    width: 65,
+    height: 65,
+    borderRadius: 40,
+    backgroundColor: "#e7eef9",
     justifyContent: "center",
-    paddingVertical: 30,
-    marginVertical: 10,
-    elevation: 3,
+    alignItems: "center",
+    marginBottom: 12,
   },
+
   cardText: {
-    marginTop: 8,
-    color: "#0b5394",
-    fontWeight: "700",
     textAlign: "center",
+    color: "#0b5394",
+    fontSize: 14.5,
+    fontWeight: "700",
   },
+
   subCardText: {
-    fontSize: 12,
+    fontSize: 11.5,
     color: "#666",
+    marginTop: 2,
   },
+
+  /* LOGOUT */
   logoutButton: {
     flexDirection: "row",
     backgroundColor: "#ff4d4d",
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 12,
-    marginHorizontal: 40,
-    marginTop: 20,
+    marginHorizontal: 50,
+    marginTop: 18,
     justifyContent: "center",
     alignItems: "center",
+    elevation: 4,
   },
   logoutText: {
     color: "#fff",
     fontWeight: "bold",
     marginLeft: 8,
+    fontSize: 15,
   },
 });

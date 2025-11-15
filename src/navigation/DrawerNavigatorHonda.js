@@ -11,17 +11,17 @@ import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// 🔹 Telas
+// Telas
 import DashboardHonda from "../screens/DashboardHonda";
-import EstoqueScreen from "../screens/EstoqueScreen"; 
-import FerramentasScreen from "../screens/FerramentasScreen"; 
-import EstoqueHondaScreen from "../screens/EstoqueHondaScreen"; 
-import FerramentasHondaScreen from "../screens/FerramentasHondaScreen"; 
+import EstoqueScreen from "../screens/EstoqueScreen";
+import FerramentasScreen from "../screens/FerramentasScreen";
+import EstoqueHondaScreen from "../screens/EstoqueHondaScreen";
+import FerramentasHondaScreen from "../screens/FerramentasHondaScreen";
 
 const Drawer = createDrawerNavigator();
 
 /* ============================================================
-   🔹 Drawer personalizado — agora com Supabase
+   🔹 Drawer personalizado
 ============================================================ */
 function CustomDrawerContent(props) {
   const [nome, setNome] = useState("Carregando...");
@@ -54,7 +54,6 @@ function CustomDrawerContent(props) {
       {...props}
       contentContainerStyle={{ flex: 1, backgroundColor: "#f8faff" }}
     >
-      {/* 🔹 Cabeçalho com informações do usuário */}
       <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
         <View style={styles.profileCircle}>
           <Ionicons name="person-circle-outline" size={70} color="#fff" />
@@ -65,12 +64,10 @@ function CustomDrawerContent(props) {
         <Text style={styles.userRole}>{roleText}</Text>
       </LinearGradient>
 
-      {/* 🔹 Lista de telas */}
       <View style={styles.drawerItems}>
         <DrawerItemList {...props} />
       </View>
 
-      {/* 🔹 Rodapé */}
       <View style={styles.footer}>
         <View style={styles.separator} />
 
@@ -97,7 +94,7 @@ function CustomDrawerContent(props) {
 }
 
 /* ============================================================
-   🔹 Drawer principal da Honda
+   🔹 Drawer principal HONDA (somente visualização)
 ============================================================ */
 export default function DrawerNavigatorHonda() {
   return (
@@ -123,7 +120,7 @@ export default function DrawerNavigatorHonda() {
         name="DashboardHonda"
         component={DashboardHonda}
         options={{
-          title: "Painel Honda",
+          title: "Painel Masters/Honda",
           drawerIcon: ({ color }) => (
             <Ionicons name="speedometer-outline" color={color} size={20} />
           ),
@@ -135,7 +132,7 @@ export default function DrawerNavigatorHonda() {
         component={EstoqueScreen}
         initialParams={{ readOnly: true }}
         options={{
-          title: "Estoque Masters (visualizar)",
+          title: "Estoque Masters",
           drawerIcon: ({ color }) => (
             <Ionicons name="cube-outline" color={color} size={20} />
           ),
@@ -147,7 +144,7 @@ export default function DrawerNavigatorHonda() {
         component={FerramentasScreen}
         initialParams={{ readOnly: true }}
         options={{
-          title: "Ferramentas Masters (visualizar)",
+          title: "Ferramentas Masters",
           drawerIcon: ({ color }) => (
             <Ionicons name="construct-outline" color={color} size={20} />
           ),
@@ -158,7 +155,7 @@ export default function DrawerNavigatorHonda() {
         name="EstoqueHonda"
         component={EstoqueHondaScreen}
         options={{
-          title: "Estoque Honda",
+          title: "Estoque Masters/Honda",
           drawerIcon: ({ color }) => (
             <Ionicons name="business-outline" color={color} size={20} />
           ),
@@ -169,7 +166,7 @@ export default function DrawerNavigatorHonda() {
         name="FerramentasHonda"
         component={FerramentasHondaScreen}
         options={{
-          title: "Ferramentas Honda",
+          title: "Ferramentas Masters/Honda",
           drawerIcon: ({ color }) => (
             <Ionicons name="build-outline" color={color} size={20} />
           ),

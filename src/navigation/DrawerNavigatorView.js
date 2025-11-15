@@ -125,25 +125,26 @@ export default function DrawerNavigatorView() {
         sceneContainerStyle: { backgroundColor: "#f4f7fc" },
       }}
     >
+
       {/* Painel principal */}
       <Drawer.Screen
         name="DashboardView"
         component={DashboardView}
         options={{
-          title: "Painel (Visualização)",
+          title: "Painel Masters/Honda",
           drawerIcon: ({ color }) => (
             <Ionicons name="speedometer-outline" color={color} size={20} />
           ),
         }}
       />
 
-      {/* Masters (somente visualizar) */}
+      {/* Masters */}
       <Drawer.Screen
         name="EstoqueMasters"
         component={EstoqueScreen}
         initialParams={{ readOnly: true }}
         options={{
-          title: "Estoque Masters (visualizar)",
+          title: "Estoque Masters",
           drawerIcon: ({ color }) => (
             <Ionicons name="cube-outline" color={color} size={20} />
           ),
@@ -155,19 +156,19 @@ export default function DrawerNavigatorView() {
         component={FerramentasScreen}
         initialParams={{ readOnly: true }}
         options={{
-          title: "Ferramentas Masters (visualizar)",
+          title: "Ferramentas Masters",
           drawerIcon: ({ color }) => (
             <Ionicons name="construct-outline" color={color} size={20} />
           ),
         }}
       />
 
-      {/* Honda (somente visualizar) */}
+      {/* Honda */}
       <Drawer.Screen
         name="EstoqueHonda"
         component={EstoqueHondaView}
         options={{
-          title: "Estoque Honda (visualizar)",
+          title: "Estoque Masters/Honda",
           drawerIcon: ({ color }) => (
             <Ionicons name="business-outline" color={color} size={20} />
           ),
@@ -178,12 +179,13 @@ export default function DrawerNavigatorView() {
         name="FerramentasHonda"
         component={FerramentasHondaView}
         options={{
-          title: "Ferramentas Honda (visualizar)",
+          title: "Ferramentas Masters/Honda",
           drawerIcon: ({ color }) => (
             <Ionicons name="build-outline" color={color} size={20} />
           ),
         }}
       />
+
     </Drawer.Navigator>
   );
 }

@@ -1,4 +1,6 @@
 // src/screens/FerramentasHondaView.js
+// VISUALIZAÇÃO — MODELO EXATO DO RELATÓRIO HONDA + EXPORTAR PDF
+
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -6,20 +8,19 @@ import {
   TextInput,
   FlatList,
   StyleSheet,
+  ScrollView,
   Platform,
   TouchableOpacity,
-  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { supabase } from "../services/supabase";
-import { format } from "date-fns";
 
 const Tab = createMaterialTopTabNavigator();
 
-/* =============================
-      LISTA DE FERRAMENTAS
-============================= */
+/* ===========================================================
+      LISTA — VISUAL HONDA
+=========================================================== */
 function ListaFerramentasTab() {
   const [ferramentas, setFerramentas] = useState([]);
   const [busca, setBusca] = useState("");
@@ -27,74 +28,65 @@ function ListaFerramentasTab() {
   useEffect(() => {
     carregar();
 
-    // 🔥 Realtime Supabase (escuta alterações)
-    const channel = supabase
-      .channel("ferramentas_honda_changes")
+    const canal = supabase
+      .channel("honda_view")
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "ferramentas",
-        },
+        { event: "*", table: "ferramentas" },
         () => carregar()
       )
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    return () => supabase.removeChannel(canal);
   }, []);
 
   const carregar = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("ferramentas")
       .select("*")
       .eq("obra", "honda")
-      .order("nome", { ascending: true });
+      .order("nome");
 
-    if (!error && data) setFerramentas(data);
+    setFerramentas(data || []);
   };
 
-  const getColorByStatus = (status) => {
-    switch (status) {
-      case "Funcionando":
-        return "#4cd137";
-      case "Com defeito":
-        return "#fbc531";
-      case "Em manutenção":
-        return "#ff4d4d";
-      default:
-        return "#777";
-    }
-  };
+  const getColor = (status) =>
+    status === "Funcionando"
+      ? "#4cd137"
+      : status === "Com defeito"
+      ? "#fbc531"
+      : "#ff4d4d";
 
-  const itensFiltrados = ferramentas.filter((it) =>
-    it.nome.toLowerCase().includes(busca.toLowerCase())
+  const filtrados = ferramentas.filter((f) =>
+    f.nome.toLowerCase().includes(busca.toLowerCase())
   );
 
   const renderItem = ({ item }) => {
-    const color = getColorByStatus(item.situacao);
-    const dataManutencao = item.data_manutencao
-      ? format(new Date(item.data_manutencao), "dd/MM/yyyy")
-      : "-";
+    const color = getColor(item.situacao);
 
     return (
-      <View style={[styles.card, { borderLeftColor: color, borderLeftWidth: 5 }]}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.nome}>{item.nome}</Text>
-          <Text style={styles.meta}>Patrimônio: {item.patrimonio}</Text>
-          <Text style={styles.meta}>Local: {item.local || "Não informado"}</Text>
-          <Text style={[styles.situacao, { color }]}>{item.situacao}</Text>
+      <View style={[styles.itemFull, { borderLeftColor: color }]}>
+        <Text style={styles.itemFullNome}>{item.nome}</Text>
 
-          {item.situacao === "Em manutenção" && (
-            <Text style={styles.meta}>🧰 Enviado em: {dataManutencao}</Text>
-          )}
-        </View>
+        <Text style={styles.itemFullLinha}>
+          Patrimônio: <Text style={styles.itemFullDest}>{item.patrimonio}</Text>
+        </Text>
+
+        <Text style={styles.itemFullLinha}>
+          Local: <Text style={styles.itemFullDest}>{item.local}</Text>
+        </Text>
+
+        <Text style={[styles.itemFullLinha, { color, fontWeight: "bold" }]}>
+          Situação: {item.situacao}
+        </Text>
       </View>
     );
   };
 
   return (
     <View style={styles.container}>
+
+      {/* Barra de Busca */}
       <View style={styles.searchRow}>
         <Ionicons name="search" size={18} color="#666" />
         <TextInput
@@ -107,34 +99,42 @@ function ListaFerramentasTab() {
       </View>
 
       <FlatList
-        data={itensFiltrados}
+        data={filtrados}
         keyExtractor={(i) => i.id.toString()}
         renderItem={renderItem}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>Nenhuma ferramenta encontrada.</Text>
-        }
+        contentContainerStyle={{ paddingBottom: 60 }}
       />
     </View>
   );
 }
 
-/* =============================
-            RELATÓRIO
-============================= */
+/* ===========================================================
+      RELATÓRIO — VISUAL HONDA + EXPORTAR PDF
+=========================================================== */
 function RelatorioTab() {
   const [ferramentas, setFerramentas] = useState([]);
 
   useEffect(() => {
     carregar();
-    const interval = setInterval(carregar, 2500);
-    return () => clearInterval(interval);
+
+    const canal = supabase
+      .channel("honda_report")
+      .on(
+        "postgres_changes",
+        { event: "*", table: "ferramentas" },
+        () => carregar()
+      )
+      .subscribe();
+
+    return () => supabase.removeChannel(canal);
   }, []);
 
   const carregar = async () => {
     const { data } = await supabase
       .from("ferramentas")
       .select("*")
-      .eq("obra", "honda");
+      .eq("obra", "honda")
+      .order("nome");
 
     setFerramentas(data || []);
   };
@@ -143,68 +143,86 @@ function RelatorioTab() {
   const comDefeito = ferramentas.filter((f) => f.situacao === "Com defeito");
   const emManutencao = ferramentas.filter((f) => f.situacao === "Em manutenção");
 
-  const gerarPDF = () => {
-    const dataAtual = new Date().toLocaleDateString("pt-BR");
-
-    const html = `
-      <html>
-      <head>
-      <meta charset="utf-8"/>
-      <title>Relatório Honda</title>
-      </head>
-      <body>
-      <h1>Relatório de Ferramentas Honda</h1>
-      <p>Gerado em ${dataAtual}</p>
-      <h2>Total: ${ferramentas.length}</h2>
-      </body>
-      </html>
-    `;
-
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `relatorio-honda-${dataAtual}.html`;
-    a.click();
+  /* BOTÃO EXPORTAR PDF */
+  const exportarPDF = () => {
+    alert("Exportar PDF — Em desenvolvimento");
   };
 
   return (
     <ScrollView style={styles.container}>
+      {/* HEADER DO RELATÓRIO */}
       <View style={styles.relatorioHeader}>
         <Ionicons name="stats-chart" size={32} color="#0b5394" />
-        <Text style={styles.relatorioTitle}>Relatório de Ferramentas</Text>
+        <Text style={styles.relatorioTitulo}>Relatório de Ferramentas</Text>
 
-        <TouchableOpacity style={styles.btnExportar} onPress={gerarPDF}>
-          <Ionicons name="download" size={20} color="#fff" />
-          <Text style={styles.btnExportarText}>Exportar</Text>
+        {/* 🔵 BOTÃO PDF */}
+        <TouchableOpacity style={styles.exportButton} onPress={exportarPDF}>
+          <Ionicons name="download-outline" size={20} color="#fff" />
+          <Text style={styles.exportText}>Exportar PDF</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Cards */}
-      <View style={styles.statsRow}>
-        <View style={[styles.statCard, { backgroundColor: "#e8f5e9" }]}>
-          <Text style={styles.statNumber}>{funcionando.length}</Text>
-          <Text>Funcionando</Text>
+      {/* CARDS RESUMO */}
+      <View style={styles.rowResumo}>
+        <View style={[styles.resumoCard, { backgroundColor: "#e8f5e9" }]}>
+          <Text style={styles.resumoNumero}>{funcionando.length}</Text>
+          <Text style={styles.resumoLabel}>Funcionando</Text>
         </View>
 
-        <View style={[styles.statCard, { backgroundColor: "#fff3e0" }]}>
-          <Text style={styles.statNumber}>{comDefeito.length}</Text>
-          <Text>Com Defeito</Text>
+        <View style={[styles.resumoCard, { backgroundColor: "#fff3e0" }]}>
+          <Text style={styles.resumoNumero}>{comDefeito.length}</Text>
+          <Text style={styles.resumoLabel}>Com Defeito</Text>
         </View>
 
-        <View style={[styles.statCard, { backgroundColor: "#ffebee" }]}>
-          <Text style={styles.statNumber}>{emManutencao.length}</Text>
-          <Text>Em Manutenção</Text>
+        <View style={[styles.resumoCard, { backgroundColor: "#ffebee" }]}>
+          <Text style={styles.resumoNumero}>{emManutencao.length}</Text>
+          <Text style={styles.resumoLabel}>Em Manutenção</Text>
         </View>
+      </View>
+
+      {/* TOTAL GERAL */}
+      <View style={styles.totalCard}>
+        <Text style={styles.resumoNumero}>{ferramentas.length}</Text>
+        <Text style={styles.totalLabel}>Total de Ferramentas Elétricas</Text>
+      </View>
+
+      {/* LISTA COMPLETA */}
+      <View style={styles.listaBox}>
+        <Text style={styles.listaTitulo}>
+          📋 Todas as Ferramentas ({ferramentas.length})
+        </Text>
+
+        {ferramentas.map((item) => {
+          const cor =
+            item.situacao === "Funcionando"
+              ? "#4cd137"
+              : item.situacao === "Com defeito"
+              ? "#fbc531"
+              : "#ff4d4d";
+
+          return (
+            <View key={item.id} style={[styles.itemFull, { borderLeftColor: cor }]}>
+              <Text style={styles.itemFullNome}>{item.nome}</Text>
+              <Text style={styles.itemFullLinha}>
+                Patrimônio: <Text style={styles.itemFullDest}>{item.patrimonio}</Text>
+              </Text>
+              <Text style={styles.itemFullLinha}>
+                Local: <Text style={styles.itemFullDest}>{item.local}</Text>
+              </Text>
+              <Text style={[styles.itemFullLinha, { color: cor, fontWeight: "bold" }]}>
+                Situação: {item.situacao}
+              </Text>
+            </View>
+          );
+        })}
       </View>
     </ScrollView>
   );
 }
 
-/* =============================
-      TELA PRINCIPAL (VIEW)
-============================= */
+/* ===========================================================
+      TELA PRINCIPAL
+=========================================================== */
 export default function FerramentasHondaView() {
   return (
     <View style={{ flex: 1 }}>
@@ -215,8 +233,11 @@ export default function FerramentasHondaView() {
 
       <Tab.Navigator
         screenOptions={{
-          tabBarActiveTintColor: "#0b5394",
-          tabBarIndicatorStyle: { backgroundColor: "#0b5394" },
+          tabBarActiveTintColor: "#fff",
+          tabBarInactiveTintColor: "#d3d3d3",
+          tabBarStyle: { backgroundColor: "#0b5394" },
+          tabBarIndicatorStyle: { backgroundColor: "#fff" },
+          tabBarLabelStyle: { fontSize: 13, fontWeight: "bold" },
         }}
       >
         <Tab.Screen name="Lista" component={ListaFerramentasTab} />
@@ -226,11 +247,15 @@ export default function FerramentasHondaView() {
   );
 }
 
-/* =============================
-            ESTILOS
-============================= */
+/* ===========================================================
+      ESTILOS
+=========================================================== */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f7fb", padding: 12 },
+  container: {
+    flex: 1,
+    backgroundColor: "#f0f2f5",
+    padding: 12,
+  },
 
   header: {
     backgroundColor: "#0b5394",
@@ -240,67 +265,106 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
+  headerTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginLeft: 8,
+  },
 
-  headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold", marginLeft: 8 },
-
+  /* Busca */
   searchRow: {
     flexDirection: "row",
     backgroundColor: "#fff",
-    paddingHorizontal: 10,
-    borderRadius: 10,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ddd",
-    marginBottom: 15,
+    borderColor: "#d8dfe7",
+    paddingHorizontal: 10,
+    marginTop: 10,
+    marginBottom: 10,
     alignItems: "center",
   },
+  searchInput: { flex: 1, height: 40 },
 
-  searchInput: {
-    marginLeft: 8,
-    flex: 1,
-    height: 40,
-  },
-
-  card: {
-    backgroundColor: "#fff",
-    padding: 14,
-    borderRadius: 12,
+  /* Lista */
+  itemFull: {
+    backgroundColor: "#f7f9fc",
+    borderRadius: 8,
+    padding: 12,
     marginBottom: 10,
+    borderLeftWidth: 6,
   },
+  itemFullNome: { fontSize: 16, fontWeight: "bold", color: "#222" },
+  itemFullLinha: { fontSize: 13, marginTop: 3, color: "#444" },
+  itemFullDest: { fontWeight: "bold", color: "#222" },
 
-  nome: { fontSize: 16, fontWeight: "bold" },
-  meta: { color: "#555" },
-  situacao: { fontWeight: "bold", marginTop: 4 },
-
-  emptyText: { textAlign: "center", marginTop: 40, color: "#777" },
-
+  /* Relatório */
   relatorioHeader: {
     backgroundColor: "#fff",
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 8,
     alignItems: "center",
+    marginBottom: 14,
+  },
+  relatorioTitulo: {
+    fontSize: 18,
+    color: "#0b5394",
+    fontWeight: "bold",
+    marginTop: 6,
   },
 
-  relatorioTitle: { fontSize: 20, fontWeight: "bold", color: "#0b5394" },
-
-  btnExportar: {
-    flexDirection: "row",
-    backgroundColor: "#0b5394",
-    padding: 10,
-    borderRadius: 10,
+  exportButton: {
     marginTop: 12,
-  },
-  btnExportarText: { color: "#fff", marginLeft: 6, fontWeight: "bold" },
-
-  statsRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 20 },
-
-  statCard: {
-    flex: 1,
-    marginHorizontal: 4,
-    backgroundColor: "#eee",
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: "#0b5394",
+    flexDirection: "row",
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
     alignItems: "center",
   },
+  exportText: {
+    color: "#fff",
+    marginLeft: 6,
+    fontWeight: "bold",
+  },
 
-  statNumber: { fontSize: 28, fontWeight: "bold" },
+  rowResumo: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  resumoCard: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    marginHorizontal: 4,
+  },
+  resumoNumero: { fontSize: 26, fontWeight: "bold", color: "#222" },
+  resumoLabel: { fontSize: 12, color: "#666" },
+
+  totalCard: {
+    marginTop: 12,
+    backgroundColor: "#e3f2fd",
+    paddingVertical: 18,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  totalLabel: {
+    marginTop: 5,
+    color: "#003366",
+    fontWeight: "bold",
+  },
+
+  listaBox: {
+    marginTop: 18,
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 8,
+  },
+  listaTitulo: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#0b5394",
+    marginBottom: 14,
+  },
 });

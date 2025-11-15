@@ -357,7 +357,7 @@ export default function AlmoxarifadoHondaScreen() {
     <View style={{ flex: 1 }}>
       <View style={styles.header}>
         <Ionicons name="business" size={22} color="#fff" style={{ marginRight: 8 }} />
-        <Text style={styles.headerTitle}>Almoxarifado Honda</Text>
+        <Text style={styles.headerTitle}>Almoxarifado Masters/Honda</Text>
       </View>
 
       <Tab.Navigator

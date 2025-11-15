@@ -1,6 +1,14 @@
 // src/screens/DashboardADM.js
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Image,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -20,7 +28,7 @@ export default function DashboardADM({ navigation }) {
 
   const handleNavigation = (screen) => {
     if (isViewer) {
-      Alert.alert("Acesso restrito", "Seu acesso é somente para visualização.");
+      Alert.alert("Acesso restrito", "Seu acesso é somente visualização.");
       return;
     }
     navigation.navigate(screen);
@@ -28,52 +36,66 @@ export default function DashboardADM({ navigation }) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
-        <Text style={styles.headerTitle}>Painel Administrativo</Text>
 
-        <Text style={styles.subText}>
-          {role === "viewer"
-            ? "Modo de visualização (visitante)"
-            : role === "adminHonda"
-            ? "Acesso: Honda"
-            : "Acesso: Masters"}
-        </Text>
+      {/* HEADER MODERNO */}
+      <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
+        <Image
+          source={require("../../assets/logo-masters.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text style={styles.headerTitle}>Painel Administrativo</Text>
       </LinearGradient>
 
+      {/* GRID DE CARDS */}
       <View style={styles.grid}>
+
+        {/* ESTOQUE MASTERS */}
         <TouchableOpacity
           style={styles.card}
           onPress={() => handleNavigation("Estoque")}
         >
-          <Ionicons name="cube-outline" size={40} color="#0b5394" />
+          <View style={styles.iconCircle}>
+            <Ionicons name="cube-outline" size={36} color="#0b5394" />
+          </View>
           <Text style={styles.cardText}>Controle de Estoque</Text>
         </TouchableOpacity>
 
+        {/* FERRAMENTAS MASTERS */}
         <TouchableOpacity
           style={styles.card}
           onPress={() => handleNavigation("Ferramentas")}
         >
-          <Ionicons name="construct-outline" size={40} color="#0b5394" />
-          <Text style={styles.cardText}>Ferramentas e Equipamentos</Text>
+          <View style={styles.iconCircle}>
+            <Ionicons name="construct-outline" size={36} color="#0b5394" />
+          </View>
+          <Text style={styles.cardText}>Ferramentas Elétricas Masters</Text>
         </TouchableOpacity>
 
+        {/* ESTOQUE MASTERS/HONDA */}
         <TouchableOpacity
           style={styles.card}
           onPress={() => handleNavigation("EstoqueHonda")}
         >
-          <Ionicons name="business-outline" size={40} color="#0b5394" />
-          <Text style={styles.cardText}>Estoque Honda</Text>
+          <View style={styles.iconCircle}>
+            <Ionicons name="business-outline" size={36} color="#0b5394" />
+          </View>
+          <Text style={styles.cardText}>Estoque Masters/Honda</Text>
         </TouchableOpacity>
 
+        {/* FERRAMENTAS MASTERS/HONDA */}
         <TouchableOpacity
           style={styles.card}
           onPress={() => handleNavigation("FerramentasHonda")}
         >
-          <Ionicons name="build-outline" size={40} color="#0b5394" />
-          <Text style={styles.cardText}>Ferramentas Honda</Text>
+          <View style={styles.iconCircle}>
+            <Ionicons name="build-outline" size={36} color="#0b5394" />
+          </View>
+          <Text style={styles.cardText}>Ferramentas Elétricas Masters/Honda</Text>
         </TouchableOpacity>
       </View>
 
+      {/* BOTÃO DE SAIR */}
       <TouchableOpacity
         style={styles.logoutButton}
         onPress={async () => {
@@ -81,71 +103,101 @@ export default function DashboardADM({ navigation }) {
           navigation.reset({ index: 0, routes: [{ name: "Login" }] });
         }}
       >
-        <Ionicons name="exit-outline" size={22} color="#fff" />
+        <Ionicons name="exit-outline" size={24} color="#fff" />
         <Text style={styles.logoutText}>Sair</Text>
       </TouchableOpacity>
     </ScrollView>
   );
 }
 
+/* =====================
+        ESTILOS
+===================== */
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: "#f4f7fc",
-    paddingBottom: 20,
+    paddingBottom: 35,
   },
+
+  /* HEADER */
   header: {
-    paddingVertical: 50,
+    paddingVertical: 45,
     alignItems: "center",
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-    marginBottom: 20,
+    elevation: 10,
+    shadowColor: "#000",
+  },
+  logo: {
+    width: 180,
+    height: 80,
+    marginBottom: 8,
   },
   headerTitle: {
     color: "#fff",
     fontSize: 22,
     fontWeight: "800",
   },
-  subText: {
-    color: "#dce6f5",
-    fontSize: 14,
-    marginTop: 5,
-  },
+
+  /* GRID */
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-around",
-    paddingHorizontal: 10,
+    paddingHorizontal: 14,
+    marginTop: 10,
   },
+
+  /* CARD MODERNO */
   card: {
+    width: "44%",
     backgroundColor: "#fff",
-    width: "42%",
-    borderRadius: 15,
+    borderRadius: 18,
+    paddingVertical: 26,
+    marginVertical: 12,
     alignItems: "center",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+
+  /* CÍRCULO DO ÍCONE */
+  iconCircle: {
+    width: 65,
+    height: 65,
+    borderRadius: 40,
+    backgroundColor: "#e7eef9",
     justifyContent: "center",
-    paddingVertical: 30,
-    marginVertical: 10,
-    elevation: 3,
+    alignItems: "center",
+    marginBottom: 12,
   },
+
   cardText: {
-    marginTop: 8,
-    color: "#0b5394",
-    fontWeight: "600",
     textAlign: "center",
+    color: "#0b5394",
+    fontSize: 14.5,
+    fontWeight: "700",
+    paddingHorizontal: 4,
   },
+
+  /* LOGOUT */
   logoutButton: {
     flexDirection: "row",
     backgroundColor: "#ff4d4d",
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 12,
-    marginHorizontal: 40,
-    marginTop: 20,
+    marginHorizontal: 50,
+    marginTop: 18,
     justifyContent: "center",
     alignItems: "center",
+    elevation: 4,
   },
   logoutText: {
     color: "#fff",
     fontWeight: "bold",
     marginLeft: 8,
+    fontSize: 15,
   },
 });

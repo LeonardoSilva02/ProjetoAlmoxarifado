@@ -11,41 +11,39 @@ import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// 🔹 Telas
+// Telas ADM Masters
 import DashboardADM from "../screens/DashboardADM";
 import EstoqueScreen from "../screens/EstoqueScreen";
 import FerramentasScreen from "../screens/FerramentasScreen";
+
+// Telas VISUALIZAÇÃO Masters/Honda
 import EstoqueHondaView from "../screens/EstoqueHondaView";
 import FerramentasHondaView from "../screens/FerramentasHondaView";
 
 const Drawer = createDrawerNavigator();
 
 /* ============================================================
-   🔹 Drawer personalizado (agora usando dados do Supabase)
+   🔹 Drawer personalizado
 ============================================================ */
 function CustomDrawerContent(props) {
   const [nome, setNome] = useState("Usuário");
-  const [email, setEmail] = useState("carregando...");
+  const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
 
   useEffect(() => {
-    const loadUser = async () => {
-      const n = await AsyncStorage.getItem("userName");
-      const e = await AsyncStorage.getItem("userEmail");
-      const r = await AsyncStorage.getItem("userRole");
-
-      if (n) setNome(n);
-      if (e) setEmail(e);
-      if (r) setRole(r);
+    const load = async () => {
+      setNome((await AsyncStorage.getItem("userName")) || "Usuário");
+      setEmail((await AsyncStorage.getItem("userEmail")) || "Sem e-mail");
+      setRole(await AsyncStorage.getItem("userRole"));
     };
-    loadUser();
+    load();
   }, []);
 
   const roleText =
     role === "admin"
-      ? "Administrador (Masters)"
+      ? "Administrador"
       : role === "adminHonda"
-      ? "Administrador Honda"
+      ? "Administrador"
       : "Visitante";
 
   return (
@@ -53,7 +51,6 @@ function CustomDrawerContent(props) {
       {...props}
       contentContainerStyle={{ flex: 1, backgroundColor: "#f8faff" }}
     >
-      {/* 🔹 Cabeçalho com dados reais */}
       <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
         <View style={styles.profileCircle}>
           <Ionicons name="person-circle-outline" size={70} color="#fff" />
@@ -64,14 +61,13 @@ function CustomDrawerContent(props) {
         <Text style={styles.userRole}>{roleText}</Text>
       </LinearGradient>
 
-      {/* 🔹 Itens */}
       <View style={styles.drawerItems}>
         <DrawerItemList {...props} />
       </View>
 
-      {/* 🔹 Rodapé */}
       <View style={styles.footer}>
         <View style={styles.separator} />
+
         <DrawerItem
           label="Sair"
           labelStyle={styles.logoutLabel}
@@ -87,6 +83,7 @@ function CustomDrawerContent(props) {
             });
           }}
         />
+
         <Text style={styles.versionText}>Versão 1.0.0</Text>
       </View>
     </DrawerContentScrollView>
@@ -117,11 +114,10 @@ export default function DrawerNavigator() {
         drawerItemStyle: {
           marginVertical: 0,
           borderRadius: 8,
-          paddingVertical: 0,
         },
-        sceneContainerStyle: { backgroundColor: "#f4f7fc" },
       }}
     >
+      {/* Painel ADM */}
       <Drawer.Screen
         name="DashboardADM"
         component={DashboardADM}
@@ -133,11 +129,12 @@ export default function DrawerNavigator() {
         }}
       />
 
+      {/* Masters */}
       <Drawer.Screen
         name="Estoque"
         component={EstoqueScreen}
         options={{
-          title: "Controle de Estoque",
+          title: "Estoque Masters",
           drawerIcon: ({ color }) => (
             <Ionicons name="cube-outline" color={color} size={20} />
           ),
@@ -148,18 +145,19 @@ export default function DrawerNavigator() {
         name="Ferramentas"
         component={FerramentasScreen}
         options={{
-          title: "Ferramentas e Equipamentos",
+          title: "Ferramentas Masters",
           drawerIcon: ({ color }) => (
             <Ionicons name="construct-outline" color={color} size={20} />
           ),
         }}
       />
 
+      {/* Masters/Honda (visualização) */}
       <Drawer.Screen
         name="EstoqueHonda"
         component={EstoqueHondaView}
         options={{
-          title: "Estoque Honda (Visualização)",
+          title: "Estoque Masters/Honda",
           drawerIcon: ({ color }) => (
             <Ionicons name="business-outline" color={color} size={20} />
           ),
@@ -170,7 +168,7 @@ export default function DrawerNavigator() {
         name="FerramentasHonda"
         component={FerramentasHondaView}
         options={{
-          title: "Ferramentas Honda (Visualização)",
+          title: "Ferramentas Masters/Honda",
           drawerIcon: ({ color }) => (
             <Ionicons name="build-outline" color={color} size={20} />
           ),
@@ -208,13 +206,13 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   userEmail: {
-    color: "#e0e0e0",
+    color: "#dce6f5",
     fontSize: 12,
   },
   userRole: {
-    color: "#c7d7f5",
-    marginTop: 4,
+    color: "#cfe0fb",
     fontSize: 12,
+    marginTop: 4,
   },
   drawerItems: {
     flex: 1,

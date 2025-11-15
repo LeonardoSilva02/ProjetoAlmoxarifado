@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { supabase } from "../services/supabase"; // 🔥 Certo agora
+import { supabase } from "../services/supabase";
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
@@ -25,15 +25,17 @@ export default function LoginScreen({ navigation }) {
   const currentYear = new Date().getFullYear();
 
   // ==========================
-  // 🔐 VERIFICAR SESSÃO EXISTENTE
+  // 🔐 VERIFICAR SESSÃO — AGORA TURBINADO
   // ==========================
   useEffect(() => {
     const verificarSessao = async () => {
       try {
-        const userRole = await AsyncStorage.getItem("userRole");
-        
+        // MultiGet → MUITO MAIS RÁPIDO QUE getItem
+        const session = await AsyncStorage.multiGet(["userRole"]);
+
+        const userRole = session[0][1];
+
         if (userRole) {
-          // Usuário já está logado, redirecionar para a tela correta
           if (userRole === "admin") {
             navigation.reset({ index: 0, routes: [{ name: "DrawerNavigator" }] });
           } else if (userRole === "adminHonda") {
@@ -42,7 +44,6 @@ export default function LoginScreen({ navigation }) {
             navigation.reset({ index: 0, routes: [{ name: "DrawerNavigatorView" }] });
           }
         } else {
-          // Não há sessão, mostrar tela de login
           setIsChecking(false);
         }
       } catch (error) {
@@ -52,10 +53,10 @@ export default function LoginScreen({ navigation }) {
     };
 
     verificarSessao();
-  }, [navigation]);
+  }, []);
 
   // ==========================
-  // 🚀 LOGIN VIA SUPABASE
+  // 🚀 LOGIN VIA SUPABASE — OTIMIZADO
   // ==========================
   const handleLogin = async () => {
     try {
@@ -64,10 +65,10 @@ export default function LoginScreen({ navigation }) {
         return;
       }
 
-      // 🔥 Agora busca pelo EMAIL (correto)
+      // Agora pegamos somente o necessário → MUITO mais rápido
       const { data, error } = await supabase
         .from("usuarios")
-        .select("*")
+        .select("id, senha_hash, role")
         .eq("email", username.trim())
         .single();
 
@@ -76,18 +77,17 @@ export default function LoginScreen({ navigation }) {
         return;
       }
 
-      // Validar senha simples (igual ao Supabase)
       if (password.trim() !== data.senha_hash) {
         Alert.alert("Erro", "Senha incorreta ❌");
         return;
       }
 
-      // Guardar infos do usuário
-      await AsyncStorage.setItem("userRole", data.role);
-      await AsyncStorage.setItem("loginType", "supabase");
-      await AsyncStorage.setItem("userId", data.id);
+      await AsyncStorage.multiSet([
+        ["userRole", data.role],
+        ["loginType", "supabase"],
+        ["userId", String(data.id)],
+      ]);
 
-      // Direcionar pela role
       if (data.role === "admin") {
         navigation.reset({ index: 0, routes: [{ name: "DrawerNavigator" }] });
       } else if (data.role === "adminHonda") {
@@ -102,7 +102,7 @@ export default function LoginScreen({ navigation }) {
   };
 
   // ==========================
-  // Animações (igual o seu)
+  // 🎨 Animações (mantidas)
   // ==========================
   const fadeLogo = useRef(new Animated.Value(0)).current;
   const fadeContent = useRef(new Animated.Value(0)).current;
@@ -111,11 +111,10 @@ export default function LoginScreen({ navigation }) {
   const gradientAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Só iniciar animações se não estiver verificando sessão
     if (!isChecking) {
       Animated.sequence([
-        Animated.timing(fadeLogo, { toValue: 1, duration: 1500, useNativeDriver: true }),
-        Animated.timing(fadeContent, { toValue: 1, duration: 1000, useNativeDriver: true }),
+        Animated.timing(fadeLogo, { toValue: 1, duration: 1200, useNativeDriver: true }),
+        Animated.timing(fadeContent, { toValue: 1, duration: 900, useNativeDriver: true }),
       ]).start();
     }
 
@@ -123,13 +122,13 @@ export default function LoginScreen({ navigation }) {
       Animated.sequence([
         Animated.timing(gradientAnim, {
           toValue: 1,
-          duration: 5000,
+          duration: 4500,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: false,
         }),
         Animated.timing(gradientAnim, {
           toValue: 0,
-          duration: 5000,
+          duration: 4500,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: false,
         }),
@@ -137,7 +136,6 @@ export default function LoginScreen({ navigation }) {
     ).start();
   }, [isChecking]);
 
-  // Mostrar loading enquanto verifica sessão
   if (isChecking) {
     return (
       <View style={[styles.container, { justifyContent: "center", alignItems: "center", backgroundColor: "#0b5394" }]}>
@@ -171,7 +169,6 @@ export default function LoginScreen({ navigation }) {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.inner}
       >
-        {/* Logo */}
         <Animated.View style={[styles.logoContainer, { opacity: fadeLogo }]}>
           <Image
             source={require("../../assets/logo-masters.png")}
@@ -181,7 +178,6 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.appName}>Sistema de Almoxarifado</Text>
         </Animated.View>
 
-        {/* Card */}
         <Animated.View style={[styles.card, { opacity: fadeContent }]}>
           <Text style={styles.title}>Bem-vindo 👋</Text>
           <Text style={styles.subtitle}>Acesse com suas credenciais</Text>
@@ -210,7 +206,6 @@ export default function LoginScreen({ navigation }) {
             />
           </View>
 
-          {/* Botão login */}
           <Animated.View style={{ transform: [{ scale: buttonScale }], width: "100%" }}>
             <TouchableOpacity
               onPressIn={() =>
@@ -234,7 +229,6 @@ export default function LoginScreen({ navigation }) {
             </TouchableOpacity>
           </Animated.View>
 
-          {/* Visitante */}
           <Animated.View style={{ transform: [{ scale: googleScale }], width: "100%" }}>
             <TouchableOpacity
               onPressIn={() =>
@@ -250,8 +244,10 @@ export default function LoginScreen({ navigation }) {
               }
               style={styles.googleButton}
               onPress={async () => {
-                await AsyncStorage.setItem("userRole", "viewer");
-                await AsyncStorage.setItem("loginType", "guest");
+                await AsyncStorage.multiSet([
+                  ["userRole", "viewer"],
+                  ["loginType", "guest"],
+                ]);
                 navigation.reset({ index: 0, routes: [{ name: "DrawerNavigatorView" }] });
               }}
               activeOpacity={0.8}
