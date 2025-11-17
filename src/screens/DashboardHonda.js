@@ -44,8 +44,7 @@ export default function DashboardHonda({ navigation }) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-
-      {/* HEADER MODERNO */}
+      {/* HEADER */}
       <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
         <Image
           source={require("../../assets/logo-masters.png")}
@@ -55,7 +54,7 @@ export default function DashboardHonda({ navigation }) {
         <Text style={styles.headerTitle}>Painel Masters/Honda</Text>
       </LinearGradient>
 
-      {/* GRID DE CARDS */}
+      {/* GRID */}
       <View style={styles.grid}>
 
         {/* ESTOQUE MASTERS */}
@@ -80,7 +79,7 @@ export default function DashboardHonda({ navigation }) {
           <Text style={styles.cardText}>Ferramentas Elétricas Masters</Text>
         </TouchableOpacity>
 
-        {/* ESTOQUE MASTERS/HONDA */}
+        {/* ESTOQUE HONDA */}
         <TouchableOpacity
           style={styles.card}
           onPress={() => handleHondaFullAccess("EstoqueHonda")}
@@ -91,7 +90,7 @@ export default function DashboardHonda({ navigation }) {
           <Text style={styles.cardText}>Estoque Masters/Honda</Text>
         </TouchableOpacity>
 
-        {/* FERRAMENTAS MASTERS/HONDA */}
+        {/* FERRAMENTAS HONDA */}
         <TouchableOpacity
           style={styles.card}
           onPress={() => handleHondaFullAccess("FerramentasHonda")}
@@ -101,9 +100,32 @@ export default function DashboardHonda({ navigation }) {
           </View>
           <Text style={styles.cardText}>Ferramentas Elétricas Masters/Honda</Text>
         </TouchableOpacity>
+
+        {/* MOVIMENTAÇÕES DE FERRAMENTAS */}
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => handleHondaFullAccess("MovimentacoesScreen")}
+        >
+          <View style={styles.iconCircle}>
+            <Ionicons name="swap-horizontal-outline" size={36} color="#0b5394" />
+          </View>
+          <Text style={styles.cardText}>Movimentações de Ferramentas</Text>
+        </TouchableOpacity>
+
+        {/* 🔵 MOVIMENTAÇÕES DE ESTOQUE HONDA — NOVO CARD */}
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => handleHondaFullAccess("MovimentacoesEstoqueScreen")}
+        >
+          <View style={styles.iconCircle}>
+            <Ionicons name="clipboard-outline" size={36} color="#0b5394" />
+          </View>
+          <Text style={styles.cardText}>Movimentações de Estoque Honda</Text>
+        </TouchableOpacity>
+
       </View>
 
-      {/* BOTÃO DE SAIR */}
+      {/* LOGOUT */}
       <TouchableOpacity
         style={styles.logoutButton}
         onPress={async () => {
@@ -118,9 +140,7 @@ export default function DashboardHonda({ navigation }) {
   );
 }
 
-/* =====================
-        ESTILOS
-===================== */
+/* =============== ESTILOS =============== */
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
@@ -128,7 +148,6 @@ const styles = StyleSheet.create({
     paddingBottom: 35,
   },
 
-  /* HEADER */
   header: {
     paddingVertical: 45,
     alignItems: "center",
@@ -148,7 +167,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
 
-  /* GRID */
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -157,7 +175,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  /* CARD MODERNO */
   card: {
     width: "44%",
     backgroundColor: "#fff",
@@ -171,7 +188,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
 
-  /* CÍRCULO DO ÍCONE */
   iconCircle: {
     width: 65,
     height: 65,
@@ -190,7 +206,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
 
-  /* LOGOUT */
   logoutButton: {
     flexDirection: "row",
     backgroundColor: "#ff4d4d",

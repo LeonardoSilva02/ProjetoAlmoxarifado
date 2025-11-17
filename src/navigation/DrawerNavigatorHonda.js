@@ -17,6 +17,8 @@ import EstoqueScreen from "../screens/EstoqueScreen";
 import FerramentasScreen from "../screens/FerramentasScreen";
 import EstoqueHondaScreen from "../screens/EstoqueHondaScreen";
 import FerramentasHondaScreen from "../screens/FerramentasHondaScreen";
+import MovimentacoesScreen from "../screens/MovimentacoesScreen"; 
+import MovimentacoesEstoqueScreen from "../screens/MovimentacoesEstoqueScreen"; // <-- NOVA
 
 const Drawer = createDrawerNavigator();
 
@@ -94,7 +96,7 @@ function CustomDrawerContent(props) {
 }
 
 /* ============================================================
-   🔹 Drawer principal HONDA (somente visualização)
+   🔹 Drawer principal HONDA
 ============================================================ */
 export default function DrawerNavigatorHonda() {
   return (
@@ -116,6 +118,7 @@ export default function DrawerNavigatorHonda() {
         sceneContainerStyle: { backgroundColor: "#f4f7fc" },
       }}
     >
+      {/* Dashboard */}
       <Drawer.Screen
         name="DashboardHonda"
         component={DashboardHonda}
@@ -127,6 +130,7 @@ export default function DrawerNavigatorHonda() {
         }}
       />
 
+      {/* Estoque Masters (somente visualização) */}
       <Drawer.Screen
         name="EstoqueMasters"
         component={EstoqueScreen}
@@ -139,6 +143,7 @@ export default function DrawerNavigatorHonda() {
         }}
       />
 
+      {/* Ferramentas Masters (somente visualização) */}
       <Drawer.Screen
         name="FerramentasMasters"
         component={FerramentasScreen}
@@ -151,6 +156,7 @@ export default function DrawerNavigatorHonda() {
         }}
       />
 
+      {/* Estoque Honda */}
       <Drawer.Screen
         name="EstoqueHonda"
         component={EstoqueHondaScreen}
@@ -162,16 +168,42 @@ export default function DrawerNavigatorHonda() {
         }}
       />
 
+      {/* Ferramentas Honda */}
       <Drawer.Screen
         name="FerramentasHonda"
         component={FerramentasHondaScreen}
         options={{
-          title: "Ferramentas Masters/Honda",
+          title: "Ferramentas Elétricas Honda",
           drawerIcon: ({ color }) => (
             <Ionicons name="build-outline" color={color} size={20} />
           ),
         }}
       />
+
+      {/* Movimentações de Ferramentas */}
+      <Drawer.Screen
+        name="MovimentacoesScreen"
+        component={MovimentacoesScreen}
+        options={{
+          title: "Movimentações de Ferramentas",
+          drawerIcon: ({ color }) => (
+            <Ionicons name="swap-horizontal-outline" color={color} size={20} />
+          ),
+        }}
+      />
+
+      {/* 🔵 Movimentações de Estoque Honda — NOVO */}
+      <Drawer.Screen
+        name="MovimentacoesEstoqueScreen"
+        component={MovimentacoesEstoqueScreen}
+        options={{
+          title: "Movimentações de Estoque Honda",
+          drawerIcon: ({ color }) => (
+            <Ionicons name="clipboard-outline" color={color} size={20} />
+          ),
+        }}
+      />
+
     </Drawer.Navigator>
   );
 }

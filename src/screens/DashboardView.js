@@ -1,4 +1,3 @@
-// src/screens/DashboardView.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -34,7 +33,7 @@ export default function DashboardView({ navigation }) {
   return (
     <ScrollView contentContainerStyle={styles.container}>
 
-      {/* HEADER PREMIUM */}
+      {/* HEADER */}
       <LinearGradient colors={["#06437a", "#0b5394"]} style={styles.header}>
         <Image
           source={require("../../assets/logo-masters.png")}
@@ -50,7 +49,9 @@ export default function DashboardView({ navigation }) {
         {/* ESTOQUE MASTERS */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("EstoqueMasters", { readOnly: true })}
+          onPress={() =>
+            navigation.navigate("EstoqueMasters", { readOnly: true })
+          }
         >
           <View style={styles.iconCircle}>
             <Ionicons name="cube-outline" size={36} color="#0b5394" />
@@ -62,7 +63,9 @@ export default function DashboardView({ navigation }) {
         {/* FERRAMENTAS MASTERS */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("FerramentasMasters", { readOnly: true })}
+          onPress={() =>
+            navigation.navigate("FerramentasMasters", { readOnly: true })
+          }
         >
           <View style={styles.iconCircle}>
             <Ionicons name="construct-outline" size={36} color="#0b5394" />
@@ -71,10 +74,12 @@ export default function DashboardView({ navigation }) {
           <Text style={styles.subCardText}>(visualização)</Text>
         </TouchableOpacity>
 
-        {/* ESTOQUE MASTERS/HONDA */}
+        {/* ESTOQUE HONDA */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("EstoqueHonda", { readOnly: true })}
+          onPress={() =>
+            navigation.navigate("EstoqueHonda", { readOnly: true })
+          }
         >
           <View style={styles.iconCircle}>
             <Ionicons name="business-outline" size={36} color="#0b5394" />
@@ -83,17 +88,20 @@ export default function DashboardView({ navigation }) {
           <Text style={styles.subCardText}>(visualização)</Text>
         </TouchableOpacity>
 
-        {/* FERRAMENTAS MASTERS/HONDA */}
+        {/* FERRAMENTAS HONDA */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate("FerramentasHonda", { readOnly: true })}
+          onPress={() =>
+            navigation.navigate("FerramentasHonda", { readOnly: true })
+          }
         >
           <View style={styles.iconCircle}>
             <Ionicons name="build-outline" size={36} color="#0b5394" />
           </View>
-          <Text style={styles.cardText}>Ferramentas Elétricas Masters/Honda</Text>
+          <Text style={styles.cardText}>Ferramentas Masters/Honda</Text>
           <Text style={styles.subCardText}>(visualização)</Text>
         </TouchableOpacity>
+
       </View>
 
       {/* BOTÃO DE SAIR */}
@@ -116,7 +124,6 @@ const styles = StyleSheet.create({
     paddingBottom: 35,
   },
 
-  /* HEADER */
   header: {
     paddingVertical: 45,
     alignItems: "center",
@@ -136,7 +143,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
 
-  /* GRID */
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -145,7 +151,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  /* CARD */
   card: {
     width: "44%",
     backgroundColor: "#fff",
@@ -159,7 +164,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
 
-  /* ÍCONE DENTRO DO CÍRCULO */
   iconCircle: {
     width: 65,
     height: 65,
@@ -183,7 +187,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  /* LOGOUT */
   logoutButton: {
     flexDirection: "row",
     backgroundColor: "#ff4d4d",

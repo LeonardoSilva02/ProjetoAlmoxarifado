@@ -1,5 +1,4 @@
-// src/screens/FerramentasHondaView.js
-// VISUALIZAÇÃO — MODELO EXATO DO RELATÓRIO HONDA + EXPORTAR PDF
+// VISUALIZAÇÃO — MODELO EXATO DO RELATÓRIO HONDA + MOVIMENTAÇÕES + EXPORTAR PDF
 
 import React, { useState, useEffect } from "react";
 import {
@@ -19,35 +18,65 @@ import { supabase } from "../services/supabase";
 const Tab = createMaterialTopTabNavigator();
 
 /* ===========================================================
-      LISTA — VISUAL HONDA
+   🔵 FUNÇÃO AUXILIAR — DATA BR
+=========================================================== */
+function formatDateBR(dateISO) {
+  if (!dateISO) return "-";
+  const d = new Date(dateISO);
+  return d.toLocaleDateString("pt-BR");
+}
+
+/* ===========================================================
+   LISTA — VISUAL HONDA + MOVIMENTAÇÕES
 =========================================================== */
 function ListaFerramentasTab() {
   const [ferramentas, setFerramentas] = useState([]);
   const [busca, setBusca] = useState("");
 
   useEffect(() => {
-    carregar();
+    carregarFerramentas();
 
     const canal = supabase
       .channel("honda_view")
       .on(
         "postgres_changes",
         { event: "*", table: "ferramentas" },
-        () => carregar()
+        () => carregarFerramentas()
       )
       .subscribe();
 
     return () => supabase.removeChannel(canal);
   }, []);
 
-  const carregar = async () => {
-    const { data } = await supabase
+  /* ============================================
+      🔥 AGORA CADA FERRAMENTA PUXA MOVIMENTAÇÃO
+  ============================================ */
+  const carregarFerramentas = async () => {
+    const { data: listaFerr } = await supabase
       .from("ferramentas")
       .select("*")
       .eq("obra", "honda")
       .order("nome");
 
-    setFerramentas(data || []);
+    if (!listaFerr) return setFerramentas([]);
+
+    const listaComMov = await Promise.all(
+      listaFerr.map(async (f) => {
+        const { data: mov } = await supabase
+          .from("movimentacoes")
+          .select("*")
+          .eq("patrimonio", f.patrimonio)
+          .order("id", { ascending: false })
+          .limit(1);
+
+        return {
+          ...f,
+          movimentacao: mov && mov.length > 0 ? mov[0] : null,
+        };
+      })
+    );
+
+    setFerramentas(listaComMov);
   };
 
   const getColor = (status) =>
@@ -63,29 +92,65 @@ function ListaFerramentasTab() {
 
   const renderItem = ({ item }) => {
     const color = getColor(item.situacao);
+    const mov = item.movimentacao;
+    const emUso = mov && !mov.data_devolucao;
 
     return (
       <View style={[styles.itemFull, { borderLeftColor: color }]}>
-        <Text style={styles.itemFullNome}>{item.nome}</Text>
 
+        <Text style={styles.itemFullNome}>{item.nome}</Text>
         <Text style={styles.itemFullLinha}>
           Patrimônio: <Text style={styles.itemFullDest}>{item.patrimonio}</Text>
         </Text>
 
-        <Text style={styles.itemFullLinha}>
-          Local: <Text style={styles.itemFullDest}>{item.local}</Text>
-        </Text>
+        {/* 🔥 SE ESTÁ EM MOVIMENTAÇÃO (RETIRADA EM ABERTO) */}
+        {emUso ? (
+          <>
+            <Text style={[styles.itemFullLinha, { color: "#0b5394", fontWeight: "bold" }]}>
+              🚨 Em uso por: {mov.colaborador}
+            </Text>
 
-        <Text style={[styles.itemFullLinha, { color, fontWeight: "bold" }]}>
-          Situação: {item.situacao}
-        </Text>
+            <Text style={styles.itemFullLinha}>
+              Obra: <Text style={styles.itemFullDest}>{mov.obra}</Text>
+            </Text>
+
+            <Text style={styles.itemFullLinha}>
+              Retirada: {formatDateBR(mov.data_retirada)}
+            </Text>
+
+            {mov.data_prevista && (
+              <Text style={styles.itemFullLinha}>
+                Prev. devolução: {formatDateBR(mov.data_prevista)}
+              </Text>
+            )}
+
+            <Text style={[styles.itemFullLinha, { color: "#c0392b", fontWeight: "bold" }]}>
+              Status: {mov.status}
+            </Text>
+          </>
+        ) : (
+          <>
+            {/* 🔵 SEM MOV — MOSTRA LOCAL NORMAL */}
+            <Text style={styles.itemFullLinha}>
+              Local: <Text style={styles.itemFullDest}>{item.local}</Text>
+            </Text>
+
+            <Text
+              style={[
+                styles.itemFullLinha,
+                { color, fontWeight: "bold" },
+              ]}
+            >
+              Situação: {item.situacao}
+            </Text>
+          </>
+        )}
       </View>
     );
   };
 
   return (
     <View style={styles.container}>
-
       {/* Barra de Busca */}
       <View style={styles.searchRow}>
         <Ionicons name="search" size={18} color="#666" />
@@ -109,14 +174,13 @@ function ListaFerramentasTab() {
 }
 
 /* ===========================================================
-      RELATÓRIO — VISUAL HONDA + EXPORTAR PDF
+   RELATÓRIO — (sem alterações)
 =========================================================== */
 function RelatorioTab() {
   const [ferramentas, setFerramentas] = useState([]);
 
   useEffect(() => {
     carregar();
-
     const canal = supabase
       .channel("honda_report")
       .on(
@@ -143,26 +207,24 @@ function RelatorioTab() {
   const comDefeito = ferramentas.filter((f) => f.situacao === "Com defeito");
   const emManutencao = ferramentas.filter((f) => f.situacao === "Em manutenção");
 
-  /* BOTÃO EXPORTAR PDF */
   const exportarPDF = () => {
     alert("Exportar PDF — Em desenvolvimento");
   };
 
   return (
     <ScrollView style={styles.container}>
-      {/* HEADER DO RELATÓRIO */}
+
       <View style={styles.relatorioHeader}>
         <Ionicons name="stats-chart" size={32} color="#0b5394" />
         <Text style={styles.relatorioTitulo}>Relatório de Ferramentas</Text>
 
-        {/* 🔵 BOTÃO PDF */}
         <TouchableOpacity style={styles.exportButton} onPress={exportarPDF}>
           <Ionicons name="download-outline" size={20} color="#fff" />
           <Text style={styles.exportText}>Exportar PDF</Text>
         </TouchableOpacity>
       </View>
 
-      {/* CARDS RESUMO */}
+      {/* Cards Resumo */}
       <View style={styles.rowResumo}>
         <View style={[styles.resumoCard, { backgroundColor: "#e8f5e9" }]}>
           <Text style={styles.resumoNumero}>{funcionando.length}</Text>
@@ -180,10 +242,10 @@ function RelatorioTab() {
         </View>
       </View>
 
-      {/* TOTAL GERAL */}
+      {/* TOTAL */}
       <View style={styles.totalCard}>
         <Text style={styles.resumoNumero}>{ferramentas.length}</Text>
-        <Text style={styles.totalLabel}>Total de Ferramentas Elétricas</Text>
+        <Text style={styles.totalLabel}>Total de Ferramentas</Text>
       </View>
 
       {/* LISTA COMPLETA */}
@@ -209,7 +271,12 @@ function RelatorioTab() {
               <Text style={styles.itemFullLinha}>
                 Local: <Text style={styles.itemFullDest}>{item.local}</Text>
               </Text>
-              <Text style={[styles.itemFullLinha, { color: cor, fontWeight: "bold" }]}>
+              <Text
+                style={[
+                  styles.itemFullLinha,
+                  { color: cor, fontWeight: "bold" },
+                ]}
+              >
                 Situação: {item.situacao}
               </Text>
             </View>
@@ -221,7 +288,7 @@ function RelatorioTab() {
 }
 
 /* ===========================================================
-      TELA PRINCIPAL
+   TELA PRINCIPAL
 =========================================================== */
 export default function FerramentasHondaView() {
   return (
@@ -248,7 +315,7 @@ export default function FerramentasHondaView() {
 }
 
 /* ===========================================================
-      ESTILOS
+   ESTILOS
 =========================================================== */
 const styles = StyleSheet.create({
   container: {
@@ -272,7 +339,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 
-  /* Busca */
   searchRow: {
     flexDirection: "row",
     backgroundColor: "#fff",
@@ -286,7 +352,6 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, height: 40 },
 
-  /* Lista */
   itemFull: {
     backgroundColor: "#f7f9fc",
     borderRadius: 8,
