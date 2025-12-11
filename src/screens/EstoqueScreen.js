@@ -1,507 +1,416 @@
-// src/screens/EstoqueScreen.js
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
   FlatList,
   Modal,
   TextInput,
   Alert,
-  Platform,
 } from "react-native";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { Ionicons } from "@expo/vector-icons";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { supabase } from "../services/supabase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
+import styles from "../styles/estoqueStyle";
 
 const Tab = createMaterialTopTabNavigator();
 
-/* -------------------------
-   CategoriaTab (SUPABASE)
-------------------------- */
-function CategoriaTab({ categoriaKey, titulo, readOnly }) {
+/* =========================
+   NORMALIZADOR
+========================= */
+function normalizar(texto) {
+  if (!texto) return "";
+  return texto
+    .toString()
+    .toLowerCase()
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+/* =========================
+   DATA SEGURA
+========================= */
+function formatarDataSegura(data) {
+  if (!data) return "--";
+  const d = new Date(data);
+  return isValid(d) ? format(d, "dd/MM/yyyy HH:mm") : "--";
+}
+
+/* =========================
+   ✅ ABA DE CATEGORIA
+========================= */
+function CategoriaTab({ categoriaKey, obra, podeEditar }) {
   const [itens, setItens] = useState([]);
   const [busca, setBusca] = useState("");
-
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
   const [nome, setNome] = useState("");
   const [quantidade, setQuantidade] = useState("");
   const [minimo, setMinimo] = useState("");
 
-  // Carregar do Supabase
+  /* ✅ CARREGAR DO SUPABASE (SÓ POR OBRA) */
   const carregar = async () => {
+    console.log("🔄 Carregando estoque:", { obra, categoriaKey });
+
     const { data, error } = await supabase
       .from("estoque_itens")
       .select("*")
-      .eq("categoria", categoriaKey)
-      .eq("obra", "masters")
-      .order("id", { ascending: false });
+      .eq("obra", obra) // já filtra pela OBRA no banco
+      .order("nome");
 
     if (error) {
-      console.log("Erro carregar estoque (masters):", error);
+      console.log("❌ ERRO SUPABASE:", error.message);
+      Alert.alert("Erro ao carregar itens", error.message);
       return;
     }
 
-    setItens(data || []);
-  };
+    const listaObra = data || [];
 
-  useEffect(() => {
-    carregar();
-  }, []);
-
-  const abrirModalNovo = () => {
-    if (readOnly) {
-      Alert.alert(
-        "Acesso somente leitura",
-        "Você não tem permissão para adicionar itens aqui."
-      );
-      return;
-    }
-    setEditingItem(null);
-    setNome("");
-    setQuantidade("");
-    setMinimo("");
-    setModalVisible(true);
-  };
-
-  const abrirModalEditar = (item) => {
-    if (readOnly) {
-      Alert.alert(
-        "Acesso somente leitura",
-        "Você não tem permissão para editar aqui."
-      );
-      return;
-    }
-    setEditingItem(item);
-    setNome(item.nome);
-    setQuantidade(String(item.quantidade));
-    setMinimo(String(item.minimo));
-    setModalVisible(true);
-  };
-
-  const confirmarSalvar = async () => {
-    if (!nome.trim() || !quantidade || !minimo) {
-      Alert.alert("Preencha todos os campos");
-      return;
-    }
-
-    const qtdNum = parseInt(quantidade, 10);
-    const minNum = parseInt(minimo, 10);
-
-    if (Number.isNaN(qtdNum) || Number.isNaN(minNum)) {
-      Alert.alert("Quantidade e mínimo devem ser números válidos");
-      return;
-    }
-
-    // Editar
-    if (editingItem) {
-      const { data, error } = await supabase
-        .from("estoque_itens")
-        .update({
-          nome: nome.trim(),
-          quantidade: qtdNum,
-          minimo: minNum,
-        })
-        .eq("id", editingItem.id)
-        .select();
-
-      if (error) {
-        console.log("Erro ao atualizar item:", error);
-        Alert.alert("Erro", "Não foi possível salvar as alterações.");
-        return;
-      }
-
-      // Atualiza local
-      setItens((prev) =>
-        prev.map((it) =>
-          it.id === editingItem.id
-            ? { ...it, nome: nome.trim(), quantidade: qtdNum, minimo: minNum }
-            : it
-        )
+    // 🔹 Filtra categoria EM MEMÓRIA
+    let porCategoria = [];
+    if (categoriaKey === "outros") {
+      porCategoria = listaObra.filter(
+        (i) =>
+          !["eletrica", "mecanica", "pintura"].includes(
+            normalizar(i.categoria)
+          )
       );
     } else {
-      // Novo
-      const novo = {
+      porCategoria = listaObra.filter(
+        (i) => normalizar(i.categoria) === normalizar(categoriaKey)
+      );
+    }
+
+    porCategoria.sort((a, b) =>
+      normalizar(a.nome).localeCompare(normalizar(b.nome))
+    );
+
+    console.log(
+      `✅ Itens carregados para ${obra}/${categoriaKey}:`,
+      porCategoria.length
+    );
+
+    setItens(porCategoria);
+  };
+
+  // Recarrega sempre que entrar na aba ou mudar de obra
+  useFocusEffect(
+    useCallback(() => {
+      carregar();
+    }, [obra, categoriaKey])
+  );
+
+  /* ✅ SALVAR ITEM NOVO */
+  const confirmarSalvar = async () => {
+    if (!nome || !quantidade || !minimo) {
+      Alert.alert("Erro", "Preencha todos os campos!");
+      return;
+    }
+
+    const agora = new Date().toISOString();
+
+    const { error } = await supabase.from("estoque_itens").insert([
+      {
         nome: nome.trim(),
-        quantidade: qtdNum,
-        minimo: minNum,
+        quantidade: Number(quantidade),
+        minimo: Number(minimo),
         categoria: categoriaKey,
-        obra: "masters",
-        criado_em: new Date().toISOString(),
-      };
+        obra: obra,
+        criado_em: agora,
+        updated_at: agora,
+      },
+    ]);
 
-      const { data, error } = await supabase
-        .from("estoque_itens")
-        .insert([novo])
-        .select();
-
-      if (error) {
-        console.log("Erro ao adicionar item:", error);
-        Alert.alert("Erro", "Não foi possível adicionar o item.");
-        return;
-      }
-
-      if (data && data[0]) {
-        setItens((prev) => [data[0], ...prev]);
-      }
+    if (error) {
+      Alert.alert("Erro ao salvar", error.message);
+      return;
     }
 
     setModalVisible(false);
+    setNome("");
+    setQuantidade("");
+    setMinimo("");
+
+    // Recarrega a lista incluindo o novo
+    carregar();
   };
 
-  const deletar = async (item) => {
-    if (readOnly) {
-      Alert.alert(
-        "Acesso somente leitura",
-        "Você não tem permissão para excluir aqui."
-      );
-      return;
-    }
-
-    const confirmar =
-      Platform.OS === "web"
-        ? window.confirm(`Excluir "${item.nome}"?`)
-        : await new Promise((resolve) => {
-            Alert.alert("Excluir item", `Excluir "${item.nome}"?`, [
-              { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
-              {
-                text: "Excluir",
-                style: "destructive",
-                onPress: () => resolve(true),
-              },
-            ]);
-          });
-
-    if (!confirmar) return;
-
-    const { error } = await supabase
-      .from("estoque_itens")
-      .delete()
-      .eq("id", item.id);
-
-    if (error) {
-      console.log("Erro ao excluir item:", error);
-      Alert.alert("Erro", "Não foi possível excluir o item.");
-      return;
-    }
-
-    setItens((prev) => prev.filter((i) => i.id !== item.id));
-  };
-
+  /* ✅ ALTERAR QUANTIDADE */
   const alterarQuantidade = async (item, delta) => {
-    if (readOnly) {
-      Alert.alert(
-        "Acesso somente leitura",
-        "Você não pode alterar quantidades aqui."
-      );
-      return;
-    }
-
-    const novoValor = Math.max(0, (item.quantidade || 0) + delta);
+    const novo = Math.max(0, item.quantidade + delta);
 
     const { error } = await supabase
       .from("estoque_itens")
-      .update({ quantidade: novoValor })
+      .update({
+        quantidade: novo,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", item.id);
 
     if (error) {
-      console.log("Erro ao alterar quantidade:", error);
-      Alert.alert("Erro", "Não foi possível alterar a quantidade.");
+      Alert.alert("Erro ao atualizar", error.message);
       return;
     }
 
-    setItens((prev) =>
-      prev.map((it) =>
-        it.id === item.id ? { ...it, quantidade: novoValor } : it
-      )
+    // Atualiza localmente
+    const novaLista = itens.map((i) =>
+      i.id === item.id ? { ...i, quantidade: novo } : i
     );
+    setItens(novaLista);
   };
 
-  const getEstoqueColor = (it) => {
-    if (it.quantidade <= it.minimo) return "#ff4d4d";
-    if (it.quantidade <= it.minimo * 2) return "#fbc531";
-    return "#4cd137";
-  };
+  /* ✅ FILTRO DE BUSCA (NÃO AFETA CARREGAMENTO) */
+  const itensFiltrados =
+    busca.trim() === ""
+      ? itens
+      : itens.filter((item) =>
+          normalizar(item.nome).includes(normalizar(busca))
+        );
 
-  const itensFiltrados = itens.filter((it) =>
-    it.nome?.toLowerCase().includes(busca.toLowerCase())
-  );
+  /* ✅ PDF */
+  const gerarPDF = async () => {
+    let html = `
+      <html>
+      <body style="font-family:Arial;padding:20px">
+      <h2>Relatório - ${obra.toUpperCase()} (${categoriaKey.toUpperCase()})</h2>
+      <table border="1" width="100%" cellpadding="6">
+        <tr>
+          <th>Item</th>
+          <th>Qtd</th>
+          <th>Mín</th>
+          <th>Atualizado</th>
+        </tr>
+    `;
 
-  const renderItem = ({ item }) => {
-    const cor = getEstoqueColor(item);
-    const criado = item.criado_em
-      ? format(new Date(item.criado_em), "dd/MM/yyyy HH:mm")
-      : "-";
+    itensFiltrados.forEach((i) => {
+      html += `
+        <tr>
+          <td>${i.nome}</td>
+          <td>${i.quantidade}</td>
+          <td>${i.minimo}</td>
+          <td>${formatarDataSegura(i.updated_at)}</td>
+        </tr>
+      `;
+    });
 
-    return (
-      <View style={[styles.card, item.quantidade <= item.minimo && styles.cardLow]}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.itemName}>{item.nome}</Text>
-          <Text style={styles.meta}>
-            Qtd:{" "}
-            <Text style={{ color: cor, fontWeight: "700" }}>
-              {item.quantidade}
-            </Text>{" "}
-            • Mínimo: {item.minimo}
-          </Text>
-          <Text style={styles.meta}>Criado: {criado}</Text>
-          {item.quantidade <= item.minimo && (
-            <Text style={styles.warning}>⚠ Abaixo do mínimo</Text>
-          )}
-        </View>
+    html += `</table></body></html>`;
 
-        {/* Botões aparecem só para ADM */}
-        {!readOnly && (
-          <View style={styles.cardActions}>
-            <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={() => alterarQuantidade(item, 1)}
-            >
-              <Ionicons name="add-circle" size={28} color="#0b5394" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={() => alterarQuantidade(item, -1)}
-            >
-              <Ionicons name="remove-circle" size={28} color="#ff4d4d" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={() => abrirModalEditar(item)}
-            >
-              <Ionicons name="pencil" size={22} color="#0b5394" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.iconBtn,
-                {
-                  backgroundColor: "#ff0000",
-                  padding: 8,
-                  borderRadius: 6,
-                  minWidth: 40,
-                  minHeight: 40,
-                  justifyContent: "center",
-                  alignItems: "center",
-                },
-              ]}
-              onPress={() => {
-                console.log("=== CLIQUE DELETAR ESTOQUE MASTERS ===");
-                console.log("Item para deletar:", item.nome, "ID:", item.id);
-                deletar(item);
-              }}
-            >
-              <Ionicons name="trash" size={22} color="#fff" />
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    );
+    const file = await Print.printToFileAsync({ html });
+    await Sharing.shareAsync(file.uri);
   };
 
   return (
     <View style={styles.tabWrap}>
-      <View style={styles.topRow}>
-        <Text style={styles.tabTitle}>{titulo}</Text>
-        <View style={styles.searchRow}>
-          <Ionicons name="search" size={18} color="#666" />
-          <TextInput
-            placeholder="Buscar item..."
-            placeholderTextColor="#999"
-            value={busca}
-            onChangeText={setBusca}
-            style={styles.searchInput}
-          />
-        </View>
+      {/* Busca */}
+      <View style={styles.searchWrap}>
+        <Ionicons name="search-outline" size={20} color="#999" />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar item..."
+          value={busca}
+          onChangeText={setBusca}
+        />
       </View>
 
-      {itensFiltrados.length === 0 ? (
-        <View style={styles.emptyWrap}>
-          <Text style={styles.emptyText}>
-            {busca ? "Nenhum item encontrado." : "Nenhum item cadastrado ainda."}
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={itensFiltrados}
-          keyExtractor={(i) => i.id.toString()}
-          renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: 120 }}
-        />
-      )}
+      {/* Botão PDF */}
+      <TouchableOpacity style={styles.modalBtn} onPress={gerarPDF}>
+        <Text style={{ color: "#fff", fontWeight: "bold" }}>
+          Gerar Relatório em PDF
+        </Text>
+      </TouchableOpacity>
 
-      {/* FAB escondido em readOnly */}
-      {!readOnly && (
-        <TouchableOpacity style={styles.fab} onPress={abrirModalNovo}>
-          <Ionicons name="add" size={30} color="#fff" />
-        </TouchableOpacity>
-      )}
+      {/* Lista de Itens */}
+      <FlatList
+        data={itensFiltrados}
+        keyExtractor={(i) => String(i.id)}
+        extraData={itensFiltrados.length}
+        renderItem={({ item }) => {
+          const alerta = item.quantidade < item.minimo;
 
-      {/* Modal */}
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>
-              {editingItem ? "Editar Item" : "Novo Item"}
-            </Text>
-
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Nome do item"
-              placeholderTextColor="#999"
-              value={nome}
-              onChangeText={setNome}
-            />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Quantidade inicial"
-              placeholderTextColor="#999"
-              keyboardType="numeric"
-              value={quantidade}
-              onChangeText={setQuantidade}
-            />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Estoque mínimo"
-              placeholderTextColor="#999"
-              keyboardType="numeric"
-              value={minimo}
-              onChangeText={setMinimo}
-            />
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: "#ccc" }]}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={{ color: "#333", fontWeight: "700" }}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: "#0b5394" }]}
-                onPress={confirmarSalvar}
-              >
-                <Text style={{ color: "#fff", fontWeight: "700" }}>
-                  {editingItem ? "Salvar" : "Adicionar"}
+          return (
+            <View
+              style={[
+                styles.card,
+                alerta && { borderColor: "red", borderWidth: 2 },
+              ]}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.itemName}>{item.nome}</Text>
+                <Text style={styles.meta}>Qtd: {item.quantidade}</Text>
+                <Text style={styles.meta}>Mín: {item.minimo}</Text>
+                <Text style={styles.update}>
+                  Atualizado: {formatarDataSegura(item.updated_at)}
                 </Text>
-              </TouchableOpacity>
+              </View>
+
+              {podeEditar && (
+                <View style={styles.cardActions}>
+                  <TouchableOpacity onPress={() => alterarQuantidade(item, 1)}>
+                    <Ionicons name="add-circle" size={26} color="#0b5394" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => alterarQuantidade(item, -1)}
+                  >
+                    <Ionicons name="remove-circle" size={26} color="#dc2626" />
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
+          );
+        }}
+        ListEmptyComponent={
+          <View style={{ padding: 20 }}>
+            <Text style={{ textAlign: "center", color: "#64748b" }}>
+              Nenhum item encontrado para essa categoria/almoxarifado.
+            </Text>
           </View>
-        </View>
-      </Modal>
+        }
+      />
+
+      {/* FAB + MODAL NOVO ITEM */}
+      {podeEditar && (
+        <>
+          <TouchableOpacity
+            style={styles.fab}
+            onPress={() => setModalVisible(true)}
+          >
+            <Ionicons name="add" size={26} color="#fff" />
+          </TouchableOpacity>
+
+          <Modal visible={modalVisible} transparent animationType="slide">
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalCard}>
+                <Text style={styles.modalTitle}>Novo Item</Text>
+
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Nome"
+                  value={nome}
+                  onChangeText={setNome}
+                />
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Quantidade"
+                  keyboardType="numeric"
+                  value={quantidade}
+                  onChangeText={setQuantidade}
+                />
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Mínimo"
+                  keyboardType="numeric"
+                  value={minimo}
+                  onChangeText={setMinimo}
+                />
+
+                <TouchableOpacity
+                  style={styles.modalBtn}
+                  onPress={confirmarSalvar}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                    Salvar
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        </>
+      )}
     </View>
   );
 }
 
-/* -------------------------
-   Tela principal
-------------------------- */
-export default function EstoqueScreen({ route }) {
-  const readOnly = route?.params?.readOnly ?? false;
+/* =========================
+   ✅ TELA PRINCIPAL
+========================= */
+export default function EstoqueScreen() {
+  const [podeEditar, setPodeEditar] = useState(false);
+  const [obraSelecionada, setObraSelecionada] = useState(null);
+
+  useEffect(() => {
+    const loadRole = async () => {
+      const role = await AsyncStorage.getItem("userRole");
+      setPodeEditar(role === "admin" || role === "adminHonda");
+    };
+    loadRole();
+  }, []);
+
+  if (!obraSelecionada) {
+    return (
+      <View style={styles.selectWrap}>
+        <Text style={styles.selectTitle}>Selecione o Almoxarifado</Text>
+
+        <TouchableOpacity
+          style={styles.selectBtn}
+          onPress={() => setObraSelecionada("masters")}
+        >
+          <Text style={styles.selectBtnText}>Masters</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.selectBtn}
+          onPress={() => setObraSelecionada("honda")}
+        >
+          <Text style={styles.selectBtnText}>Honda</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.header}>
-        <Ionicons name="layers" size={22} color="#fff" style={{ marginRight: 8 }} />
-        <Text style={styles.headerTitle}>Controle de Estoque</Text>
-        {readOnly && (
-          <Text style={{ color: "#fff", marginLeft: 12, fontWeight: "700" }}>
-            (Somente visualização)
-          </Text>
-        )}
+        <TouchableOpacity onPress={() => setObraSelecionada(null)}>
+          <Ionicons name="arrow-back-outline" size={24} color="#fff" />
+        </TouchableOpacity>
+
+        <Text style={styles.headerTitle}>
+          Estoque - {obraSelecionada.toUpperCase()}
+        </Text>
       </View>
 
-      <Tab.Navigator
-        screenOptions={{
-          tabBarActiveTintColor: "#fff",
-          tabBarStyle: { backgroundColor: "#0b5394" },
-          tabBarIndicatorStyle: { backgroundColor: "#fff" },
-          tabBarLabelStyle: { fontSize: 13, fontWeight: "700" },
-          swipeEnabled: true,
-        }}
-      >
-        <Tab.Screen
-          name="Elétrica"
-          options={{
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="flash" size={20} color={color} />
-            ),
-          }}
-        >
+      <Tab.Navigator>
+        <Tab.Screen name="Elétrica">
           {() => (
             <CategoriaTab
               categoriaKey="eletrica"
-              titulo="Materiais - Elétrica"
-              readOnly={readOnly}
+              obra={obraSelecionada}
+              podeEditar={podeEditar}
             />
           )}
         </Tab.Screen>
 
-        <Tab.Screen
-          name="Mecânica"
-          options={{
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="cog" size={20} color={color} />
-            ),
-          }}
-        >
+        <Tab.Screen name="Mecânica">
           {() => (
             <CategoriaTab
               categoriaKey="mecanica"
-              titulo="Materiais - Mecânica"
-              readOnly={readOnly}
+              obra={obraSelecionada}
+              podeEditar={podeEditar}
             />
           )}
         </Tab.Screen>
 
-        <Tab.Screen
-          name="Pintura"
-          options={{
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="color-palette" size={20} color={color} />
-            ),
-          }}
-        >
+        <Tab.Screen name="Pintura">
           {() => (
             <CategoriaTab
               categoriaKey="pintura"
-              titulo="Materiais - Pintura"
-              readOnly={readOnly}
+              obra={obraSelecionada}
+              podeEditar={podeEditar}
             />
           )}
         </Tab.Screen>
 
-        <Tab.Screen
-          name="Porcas e Arruelas"
-          options={{
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="hardware-chip" size={20} color={color} />
-            ),
-          }}
-        >
-          {() => (
-            <CategoriaTab
-              categoriaKey="porcas_arruelas"
-              titulo="Materiais - Porcas, Arruelas e Parafusos"
-              readOnly={readOnly}
-            />
-          )}
-        </Tab.Screen>
-
-        <Tab.Screen
-          name="Outros"
-          options={{
-            tabBarIcon: ({ color }) => (
-              <Ionicons name="apps" size={20} color={color} />
-            ),
-          }}
-        >
+        <Tab.Screen name="Outros">
           {() => (
             <CategoriaTab
               categoriaKey="outros"
-              titulo="Materiais - Outros"
-              readOnly={readOnly}
+              obra={obraSelecionada}
+              podeEditar={podeEditar}
             />
           )}
         </Tab.Screen>
@@ -509,107 +418,3 @@ export default function EstoqueScreen({ route }) {
     </View>
   );
 }
-
-/* ------------------------- ESTILOS ------------------------- */
-const styles = StyleSheet.create({
-  header: {
-    backgroundColor: "#0b5394",
-    paddingTop: Platform.OS === "ios" ? 50 : 25,
-    paddingBottom: 12,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    elevation: 6,
-  },
-  headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold" },
-
-  tabWrap: { flex: 1, backgroundColor: "#f5f7fb", padding: 12 },
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  tabTitle: { fontSize: 16, fontWeight: "700", color: "#0b5394" },
-
-  searchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#e6eaf5",
-  },
-  searchInput: { marginLeft: 8, minWidth: 160, height: 40, color: "#333" },
-
-  emptyWrap: { flex: 1, justifyContent: "center", alignItems: "center" },
-  emptyText: { color: "#777" },
-
-  card: {
-    flexDirection: "row",
-    padding: 14,
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    marginBottom: 10,
-    elevation: 3,
-    alignItems: "center",
-  },
-  cardLow: { borderWidth: 1.5, borderColor: "#ff4d4d", backgroundColor: "#fff4f4" },
-  itemName: { fontSize: 16, fontWeight: "700", color: "#222", marginBottom: 6 },
-  meta: { color: "#666", fontSize: 13 },
-  warning: { color: "#ff4d4d", marginTop: 6, fontWeight: "700" },
-
-  cardActions: { flexDirection: "row", alignItems: "center", marginLeft: 12 },
-  iconBtn: { marginLeft: 8 },
-
-  fab: {
-    position: "absolute",
-    right: 18,
-    bottom: 22,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: "#0b5394",
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 8,
-  },
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalCard: {
-    width: "88%",
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    padding: 18,
-    elevation: 12,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#0b5394",
-    marginBottom: 12,
-  },
-  modalInput: {
-    backgroundColor: "#f3f6ff",
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#e6eaf5",
-    color: "#333",
-  },
-  modalActions: { flexDirection: "row", justifyContent: "space-between", marginTop: 6 },
-  modalBtn: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 10,
-    alignItems: "center",
-    marginHorizontal: 6,
-  },
-});

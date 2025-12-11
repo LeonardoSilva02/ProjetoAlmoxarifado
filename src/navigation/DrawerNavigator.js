@@ -1,4 +1,3 @@
-// src/navigation/DrawerNavigator.js
 import React, { useEffect, useState } from "react";
 import {
   createDrawerNavigator,
@@ -7,43 +6,48 @@ import {
   DrawerItem,
 } from "@react-navigation/drawer";
 import { Ionicons } from "@expo/vector-icons";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Telas ADM Masters
-import DashboardADM from "../screens/DashboardADM";
+import styles from "../styles/drawerStyles";
+
+// ✅ TELAS
+import DashboardScreen from "../screens/DashboardScreen";
 import EstoqueScreen from "../screens/EstoqueScreen";
 import FerramentasScreen from "../screens/FerramentasScreen";
-
-// Telas VISUALIZAÇÃO Masters/Honda
-import EstoqueHondaView from "../screens/EstoqueHondaView";
-import FerramentasHondaView from "../screens/FerramentasHondaView";
+import MovimentacoesFerramentas from "../screens/MovimentacoesFerramentas";
+import MovimentacoesEstoque from "../screens/MovimentacoesEstoque";
 
 const Drawer = createDrawerNavigator();
 
 /* ============================================================
-   🔹 Drawer personalizado
+   🔹 Drawer personalizado (usuário + logout)
 ============================================================ */
 function CustomDrawerContent(props) {
-  const [nome, setNome] = useState("Usuário");
+  const [nome, setNome] = useState("Carregando...");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
 
   useEffect(() => {
-    const load = async () => {
-      setNome((await AsyncStorage.getItem("userName")) || "Usuário");
-      setEmail((await AsyncStorage.getItem("userEmail")) || "Sem e-mail");
-      setRole(await AsyncStorage.getItem("userRole"));
+    const loadUser = async () => {
+      const n = await AsyncStorage.getItem("userName");
+      const e = await AsyncStorage.getItem("userEmail");
+      const r = await AsyncStorage.getItem("userRole");
+
+      if (n) setNome(n);
+      if (e) setEmail(e);
+      if (r) setRole(r);
     };
-    load();
+
+    loadUser();
   }, []);
 
   const roleText =
-    role === "admin"
-      ? "Administrador"
-      : role === "adminHonda"
-      ? "Administrador"
+    role === "adminHonda"
+      ? "Administrador Honda"
+      : role === "admin"
+      ? "Administrador Masters"
       : "Visitante";
 
   return (
@@ -91,18 +95,30 @@ function CustomDrawerContent(props) {
 }
 
 /* ============================================================
-   🔹 Drawer principal (ADM)
+   🔹 Drawer ÚNICO PARA TODOS OS LOGINS (COM CONTROLE DE PERFIL)
 ============================================================ */
 export default function DrawerNavigator() {
+  const [role, setRole] = useState("viewer");
+
+  useEffect(() => {
+    const loadRole = async () => {
+      const r = await AsyncStorage.getItem("userRole");
+      setRole(r || "viewer");
+    };
+
+    loadRole();
+  }, []);
+
+  const isViewer = role === "viewer";
+
   return (
     <Drawer.Navigator
-      initialRouteName="DashboardADM"
+      initialRouteName="Dashboard"
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerStyle: { backgroundColor: "#0b5394" },
         headerTintColor: "#fff",
         headerTitleAlign: "center",
-        drawerType: "front",
         drawerActiveBackgroundColor: "#0b5394",
         drawerActiveTintColor: "#fff",
         drawerInactiveTintColor: "#444",
@@ -111,138 +127,80 @@ export default function DrawerNavigator() {
           fontWeight: "600",
           marginLeft: -10,
         },
-        drawerItemStyle: {
-          marginVertical: 0,
-          borderRadius: 8,
-        },
+        sceneContainerStyle: { backgroundColor: "#f4f7fc" },
       }}
     >
-      {/* Painel ADM */}
+      {/* ✅ DASHBOARD */}
       <Drawer.Screen
-        name="DashboardADM"
-        component={DashboardADM}
+        name="Dashboard"
+        component={DashboardScreen}
         options={{
           title: "Painel Principal",
           drawerIcon: ({ color }) => (
-            <Ionicons name="home-outline" color={color} size={20} />
+            <Ionicons name="speedometer-outline" color={color} size={20} />
           ),
         }}
       />
 
-      {/* Masters */}
+      {/* ✅ ESTOQUE */}
       <Drawer.Screen
         name="Estoque"
         component={EstoqueScreen}
         options={{
-          title: "Estoque Masters",
+          title: "Estoque",
           drawerIcon: ({ color }) => (
             <Ionicons name="cube-outline" color={color} size={20} />
           ),
         }}
       />
 
+      {/* ✅ FERRAMENTAS */}
       <Drawer.Screen
         name="Ferramentas"
         component={FerramentasScreen}
         options={{
-          title: "Ferramentas Masters",
+          title: "Ferramentas",
           drawerIcon: ({ color }) => (
             <Ionicons name="construct-outline" color={color} size={20} />
           ),
         }}
       />
 
-      {/* Masters/Honda (visualização) */}
-      <Drawer.Screen
-        name="EstoqueHonda"
-        component={EstoqueHondaView}
-        options={{
-          title: "Estoque Masters/Honda",
-          drawerIcon: ({ color }) => (
-            <Ionicons name="business-outline" color={color} size={20} />
-          ),
-        }}
-      />
+      {/* ✅ MOVIMENTAÇÕES DE FERRAMENTAS (SÓ ADMIN) */}
+      {!isViewer && (
+        <Drawer.Screen
+          name="MovimentacoesFerramentas"
+          component={MovimentacoesFerramentas}
+          options={{
+            title: "Movimentações de Ferramentas",
+            drawerIcon: ({ color }) => (
+              <Ionicons
+                name="swap-horizontal-outline"
+                color={color}
+                size={20}
+              />
+            ),
+          }}
+        />
+      )}
 
-      <Drawer.Screen
-        name="FerramentasHonda"
-        component={FerramentasHondaView}
-        options={{
-          title: "Ferramentas Masters/Honda",
-          drawerIcon: ({ color }) => (
-            <Ionicons name="build-outline" color={color} size={20} />
-          ),
-        }}
-      />
+      {/* ✅ MOVIMENTAÇÕES DE ESTOQUE (SÓ ADMIN) */}
+      {!isViewer && (
+        <Drawer.Screen
+          name="MovimentacoesEstoque"
+          component={MovimentacoesEstoque}
+          options={{
+            title: "Movimentações de Estoque",
+            drawerIcon: ({ color }) => (
+              <Ionicons
+                name="clipboard-outline"
+                color={color}
+                size={20}
+              />
+            ),
+          }}
+        />
+      )}
     </Drawer.Navigator>
   );
 }
-
-/* ============================================================
-   🎨 Estilos
-============================================================ */
-const styles = StyleSheet.create({
-  header: {
-    paddingVertical: 40,
-    alignItems: "center",
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
-    elevation: 5,
-  },
-  profileCircle: {
-    width: 85,
-    height: 85,
-    borderRadius: 42.5,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.4)",
-    marginBottom: 8,
-  },
-  userName: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  userEmail: {
-    color: "#dce6f5",
-    fontSize: 12,
-  },
-  userRole: {
-    color: "#cfe0fb",
-    fontSize: 12,
-    marginTop: 4,
-  },
-  drawerItems: {
-    flex: 1,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-  },
-  separator: {
-    borderTopWidth: 1,
-    borderTopColor: "#ddd",
-    marginVertical: 8,
-  },
-  footer: {
-    paddingHorizontal: 10,
-    paddingBottom: 15,
-  },
-  logoutButton: {
-    backgroundColor: "#ff4d4d",
-    borderRadius: 10,
-    height: 42,
-    justifyContent: "center",
-  },
-  logoutLabel: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 14,
-  },
-  versionText: {
-    textAlign: "center",
-    fontSize: 11,
-    color: "#999",
-    marginTop: 8,
-  },
-});
