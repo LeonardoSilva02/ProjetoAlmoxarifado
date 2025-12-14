@@ -20,12 +20,12 @@ export default StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    borderBottomLeftRadius: 22,
-    borderBottomRightRadius: 22,
-    elevation: 10,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    elevation: 12,
     shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
   },
 
@@ -33,34 +33,31 @@ export default StyleSheet.create({
     color: "#fff",
     fontSize: 22,
     fontWeight: "900",
-    letterSpacing: 0.7,
+    letterSpacing: 0.6,
   },
 
   /* =========================
-     TABS REFINADAS
+     TABS
   ========================= */
   tabs: {
     flexDirection: "row",
     backgroundColor: "#dce3f7",
-    borderRadius: 16,
-    padding: 5,
+    borderRadius: 18,
+    padding: 6,
     marginVertical: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 3,
+    elevation: 4,
   },
 
   tabBtn: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: "center",
-    borderRadius: 12,
+    borderRadius: 14,
   },
 
   tabActive: {
     backgroundColor: "#0b5394",
-    elevation: 3,
+    elevation: 4,
   },
 
   tabText: {
@@ -69,30 +66,29 @@ export default StyleSheet.create({
     color: "#0b5394",
   },
 
-  /* FORÇA O TEXTO A FICAR BRANCO NA ABA ATIVA */
   tabTextActive: {
     color: "#fff",
-    fontWeight: "800",
+    fontWeight: "900",
   },
 
   /* =========================
-     CABEÇALHO DE GRUPO
+     CABEÇALHOS DE GRUPO
   ========================= */
   headerGrupo: {
     fontSize: 16,
     fontWeight: "900",
     color: "#0b5394",
-    marginTop: 20,
-    marginBottom: 6,
-    paddingLeft: 4,
+    marginTop: 22,
+    marginBottom: 8,
+    paddingLeft: 6,
   },
 
   /* =========================
-     CARD PREMIUM
+     CARD PADRÃO
   ========================= */
   card: {
     backgroundColor: "#ffffff",
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 18,
     marginBottom: 14,
     elevation: 5,
@@ -101,20 +97,20 @@ export default StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     borderWidth: 1,
-    borderColor: "#e6ecf5",
+    borderColor: "#e5ebf4",
   },
 
   cardRelatorio: {
-    backgroundColor: "#f4f7ff",
-    borderRadius: 16,
+    backgroundColor: "#f5f8ff",
+    borderRadius: 18,
     padding: 18,
-    marginBottom: 16,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: "#dce4f5",
+    borderColor: "#dde6f5",
   },
 
   nome: {
-    fontWeight: "800",
+    fontWeight: "900",
     fontSize: 17,
     color: "#0b5394",
     marginBottom: 4,
@@ -122,30 +118,30 @@ export default StyleSheet.create({
 
   meta: {
     fontSize: 13,
-    color: "#6b7280",
+    color: "#64748b",
     marginBottom: 2,
   },
 
   situacao: {
-    fontWeight: "700",
+    fontWeight: "800",
     marginTop: 8,
     fontSize: 14,
   },
 
   /* =========================
-     BOTÃO FLUTUANTE PREMIUM
+     BOTÃO FLUTUANTE
   ========================= */
   fab: {
     position: "absolute",
     right: 22,
     bottom: 22,
     backgroundColor: "#0b5394",
-    width: 62,
-    height: 62,
-    borderRadius: 31,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
-    elevation: 12,
+    elevation: 14,
     shadowColor: "#000",
     shadowOpacity: 0.35,
     shadowRadius: 10,
@@ -153,28 +149,26 @@ export default StyleSheet.create({
   },
 
   /* =========================
-     BARRA DE BUSCA
+     BUSCA
   ========================= */
   searchRow: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#ffffff",
-    padding: 12,
-    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 16,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: "#e1e6ef",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    elevation: 3,
   },
 
   searchInput: {
     flex: 1,
     paddingLeft: 10,
     fontSize: 15,
-    color: "#333",
+    color: "#111827",
   },
 
   /* =========================
@@ -185,24 +179,24 @@ export default StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#22c55e",
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingVertical: 15,
+    borderRadius: 16,
     marginBottom: 16,
-    elevation: 4,
+    elevation: 5,
     shadowColor: "#000",
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.18,
     shadowRadius: 6,
   },
 
   btnPdfText: {
     color: "#fff",
-    fontWeight: "800",
+    fontWeight: "900",
     marginLeft: 8,
     fontSize: 15,
   },
 
   /* =========================
-     MODAL LUXO
+     MODAL
   ========================= */
   modalOverlay: {
     flex: 1,
@@ -215,11 +209,11 @@ export default StyleSheet.create({
   modalCard: {
     width: "100%",
     backgroundColor: "#fff",
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 22,
-    elevation: 10,
+    elevation: 12,
     shadowColor: "#000",
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.28,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
   },
@@ -233,12 +227,12 @@ export default StyleSheet.create({
   },
 
   modalInput: {
-    backgroundColor: "#f3f5fa",
+    backgroundColor: "#f3f6fb",
     borderRadius: 14,
     padding: 14,
     marginBottom: 14,
     fontSize: 15,
-    color: "#111",
+    color: "#111827",
     borderWidth: 1,
     borderColor: "#dde3ee",
   },
@@ -246,14 +240,14 @@ export default StyleSheet.create({
   modalBtn: {
     backgroundColor: "#0b5394",
     paddingVertical: 14,
-    borderRadius: 14,
+    borderRadius: 16,
     alignItems: "center",
-    elevation: 4,
+    elevation: 5,
   },
 
   modalBtnText: {
     color: "#fff",
-    fontWeight: "800",
+    fontWeight: "900",
     fontSize: 16,
   },
 
@@ -275,16 +269,13 @@ export default StyleSheet.create({
   },
 
   selectCard: {
-    flexDirection: "row",
-    alignItems: "center",
     backgroundColor: "#0b5394",
     width: "80%",
     paddingVertical: 20,
-    borderRadius: 20,
+    borderRadius: 22,
     marginBottom: 20,
-    justifyContent: "center",
-    gap: 10,
-    elevation: 10,
+    alignItems: "center",
+    elevation: 12,
     shadowColor: "#000",
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -293,7 +284,7 @@ export default StyleSheet.create({
   selectCardText: {
     color: "#fff",
     fontSize: 18,
-    fontWeight: "800",
+    fontWeight: "900",
     letterSpacing: 0.5,
   },
 });

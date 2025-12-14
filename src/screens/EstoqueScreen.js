@@ -173,19 +173,150 @@ function CategoriaTab({ categoriaKey, obra, podeEditar }) {
         );
 
   /* ✅ PDF */
-  const gerarPDF = async () => {
+/* ✅ PDF */
+const gerarPDF = async () => {
+  try {
+    const { data, error } = await supabase
+      .from("estoque_itens")
+      .select("*")
+      .eq("obra", obra)
+      .order("categoria")
+      .order("nome");
+
+    if (error) {
+      Alert.alert("Erro ao gerar PDF", error.message);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      Alert.alert("Aviso", "Nenhum item encontrado no estoque.");
+      return;
+    }
+
+    // 🔹 Agrupar por categoria
+    const categorias = {};
+    data.forEach((item) => {
+      const cat = item.categoria || "outros";
+      if (!categorias[cat]) categorias[cat] = [];
+      categorias[cat].push(item);
+    });
+
     let html = `
       <html>
-      <body style="font-family:Arial;padding:20px">
-      <h2>Relatório - ${obra.toUpperCase()} (${categoriaKey.toUpperCase()})</h2>
-      <table border="1" width="100%" cellpadding="6">
-        <tr>
-          <th>Item</th>
-          <th>Qtd</th>
-          <th>Mín</th>
-          <th>Atualizado</th>
-        </tr>
+      <head>
+        <meta charset="utf-8" />
+        <style>
+          body {
+            font-family: Arial;
+            padding: 20px;
+          }
+
+          h1, h2, h3 {
+            text-align: center;
+          }
+
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            page-break-inside: auto;
+          }
+
+          tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+          }
+
+          th, td {
+            border: 1px solid #000;
+            padding: 6px;
+            font-size: 12px;
+          }
+
+          th {
+            background: #f1f5f9;
+          }
+
+          .alerta {
+            background: #fee2e2;
+          }
+
+          .categoria {
+            page-break-before: always;
+          }
+
+          .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 11px;
+            color: #555;
+          }
+        </style>
+      </head>
+
+      <body>
+        <h1>Relatório Geral de Estoque</h1>
+        <h3>Almoxarifado: ${obra.toUpperCase()}</h3>
+        <p style="text-align:center;">
+          Data de geração: ${formatarDataSegura(new Date())}
+        </p>
+        <hr/>
     `;
+
+    Object.keys(categorias).forEach((cat, index) => {
+      html += `
+        <div class="${index > 0 ? "categoria" : ""}">
+          <h2>Categoria: ${cat.toUpperCase()}</h2>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th width="70">Qtd</th>
+                <th width="70">Mín</th>
+                <th width="140">Atualizado</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      categorias[cat].forEach((i) => {
+        const alerta = i.quantidade < i.minimo ? "alerta" : "";
+
+        html += `
+          <tr class="${alerta}">
+            <td>${i.nome}</td>
+            <td align="center">${i.quantidade}</td>
+            <td align="center">${i.minimo}</td>
+            <td align="center">${formatarDataSegura(i.updated_at)}</td>
+          </tr>
+        `;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>
+      `;
+    });
+
+    html += `
+        <div class="footer">
+          Sistema de Almoxarifado • Relatório automático
+        </div>
+      </body>
+      </html>
+    `;
+
+    const file = await Print.printToFileAsync({ html });
+    await Sharing.shareAsync(file.uri);
+
+  } catch (err) {
+    Alert.alert("Erro", "Falha ao gerar PDF");
+    console.log(err);
+  }
+};
+
 
     itensFiltrados.forEach((i) => {
       html += `
