@@ -1,13 +1,19 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useNavigation } from "@react-navigation/native";
 import {
   View,
   Text,
-  TouchableOpacity,
   FlatList,
   Modal,
   TextInput,
   Alert,
+  Image,
+  TouchableOpacity,
 } from "react-native";
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
+import ButtonEffect from "../components/ui/ButtonEffect";
+import { VoltarDashboardBtn } from "../components/ui/VoltarDashboardBtn";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { format, isValid } from "date-fns";
@@ -33,45 +39,37 @@ function normalizar(texto) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-/* =========================
-   DATA SEGURA
-========================= */
-function formatarDataSegura(data) {
-  if (!data) return "--";
-  const d = new Date(data);
-  return isValid(d) ? format(d, "dd/MM/yyyy HH:mm") : "--";
-}
 
-/* =========================
-   ✅ ABA DE CATEGORIA
-========================= */
+// =========================
+//   ABA DE CATEGORIA
+// =========================
 function CategoriaTab({ categoriaKey, obra, podeEditar }) {
+    // ...imagem removida...
   const [itens, setItens] = useState([]);
   const [busca, setBusca] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [nome, setNome] = useState("");
   const [quantidade, setQuantidade] = useState("");
   const [minimo, setMinimo] = useState("");
+  const [editingItem, setEditingItem] = useState(null);
+  const [modalExcluir, setModalExcluir] = useState({ visivel: false, item: null, carregando: false });
+  // const [foto, setFoto] = useState(null); // imagem removida
 
-  /* ✅ CARREGAR DO SUPABASE (SÓ POR OBRA) */
+  // Carregar do Supabase (só por obra)
   const carregar = async () => {
-    console.log("🔄 Carregando estoque:", { obra, categoriaKey });
-
     const { data, error } = await supabase
       .from("estoque_itens")
       .select("*")
-      .eq("obra", obra) // já filtra pela OBRA no banco
+      .eq("obra", obra)
       .order("nome");
 
     if (error) {
-      console.log("❌ ERRO SUPABASE:", error.message);
       Alert.alert("Erro ao carregar itens", error.message);
       return;
     }
 
     const listaObra = data || [];
 
-    // 🔹 Filtra categoria EM MEMÓRIA
     let porCategoria = [];
     if (categoriaKey === "outros") {
       porCategoria = listaObra.filter(
@@ -90,368 +88,261 @@ function CategoriaTab({ categoriaKey, obra, podeEditar }) {
       normalizar(a.nome).localeCompare(normalizar(b.nome))
     );
 
-    console.log(
-      `✅ Itens carregados para ${obra}/${categoriaKey}:`,
-      porCategoria.length
-    );
-
     setItens(porCategoria);
   };
 
-  // Recarrega sempre que entrar na aba ou mudar de obra
   useFocusEffect(
     useCallback(() => {
       carregar();
     }, [obra, categoriaKey])
   );
 
-  /* ✅ SALVAR ITEM NOVO */
-  const confirmarSalvar = async () => {
-    if (!nome || !quantidade || !minimo) {
-      Alert.alert("Erro", "Preencha todos os campos!");
+
+  // Função para abrir modal de edição
+  function abrirModalEditar(item) {
+    setEditingItem(item);
+    setNome(item.nome);
+    setQuantidade(String(item.quantidade));
+    setMinimo(String(item.minimo));
+    setModalVisible(true);
+  }
+
+  // Função para confirmar salvar (edição ou novo)
+ async function confirmarSalvar() {
+  try {
+    console.log('Início confirmarSalvar');
+    if (!nome.trim() || !quantidade.trim() || !minimo.trim()) {
+      Alert.alert("Preencha todos os campos!");
       return;
     }
 
-    const agora = new Date().toISOString();
+    // Imagem removida: não há mais upload nem campo foto_url
 
-    const { error } = await supabase.from("estoque_itens").insert([
-      {
-        nome: nome.trim(),
-        quantidade: Number(quantidade),
-        minimo: Number(minimo),
-        categoria: categoriaKey,
-        obra: obra,
-        criado_em: agora,
-        updated_at: agora,
-      },
-    ]);
+    const payload = {
+      nome: nome.trim(),
+      quantidade: Number(quantidade),
+      minimo: Number(minimo),
+      categoria: categoriaKey,
+      obra,
+    };
+    console.log('Payload pronto', payload);
 
-    if (error) {
-      Alert.alert("Erro ao salvar", error.message);
+    let result;
+    if (editingItem) {
+      result = await supabase
+        .from("estoque_itens")
+        .update(payload)
+        .eq("id", editingItem.id);
+    } else {
+      result = await supabase.from("estoque_itens").insert([payload]);
+    }
+    console.log('Resultado do insert/update', result);
+
+    if (result.error) {
+      Alert.alert("Erro ao salvar", result.error.message);
       return;
     }
 
     setModalVisible(false);
+    setEditingItem(null);
     setNome("");
     setQuantidade("");
     setMinimo("");
-
-    // Recarrega a lista incluindo o novo
     carregar();
-  };
-
-  /* ✅ ALTERAR QUANTIDADE */
-  const alterarQuantidade = async (item, delta) => {
-    const novo = Math.max(0, item.quantidade + delta);
-
-    const { error } = await supabase
-      .from("estoque_itens")
-      .update({
-        quantidade: novo,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", item.id);
-
-    if (error) {
-      Alert.alert("Erro ao atualizar", error.message);
-      return;
-    }
-
-    // Atualiza localmente
-    const novaLista = itens.map((i) =>
-      i.id === item.id ? { ...i, quantidade: novo } : i
-    );
-    setItens(novaLista);
-  };
-
-  /* ✅ FILTRO DE BUSCA (NÃO AFETA CARREGAMENTO) */
-  const itensFiltrados =
-    busca.trim() === ""
-      ? itens
-      : itens.filter((item) =>
-          normalizar(item.nome).includes(normalizar(busca))
-        );
-
-  /* ✅ PDF */
-/* ✅ PDF */
-const gerarPDF = async () => {
-  try {
-    const { data, error } = await supabase
-      .from("estoque_itens")
-      .select("*")
-      .eq("obra", obra)
-      .order("categoria")
-      .order("nome");
-
-    if (error) {
-      Alert.alert("Erro ao gerar PDF", error.message);
-      return;
-    }
-
-    if (!data || data.length === 0) {
-      Alert.alert("Aviso", "Nenhum item encontrado no estoque.");
-      return;
-    }
-
-    // 🔹 Agrupar por categoria
-    const categorias = {};
-    data.forEach((item) => {
-      const cat = item.categoria || "outros";
-      if (!categorias[cat]) categorias[cat] = [];
-      categorias[cat].push(item);
-    });
-
-    let html = `
-      <html>
-      <head>
-        <meta charset="utf-8" />
-        <style>
-          body {
-            font-family: Arial;
-            padding: 20px;
-          }
-
-          h1, h2, h3 {
-            text-align: center;
-          }
-
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            page-break-inside: auto;
-          }
-
-          tr {
-            page-break-inside: avoid;
-            page-break-after: auto;
-          }
-
-          th, td {
-            border: 1px solid #000;
-            padding: 6px;
-            font-size: 12px;
-          }
-
-          th {
-            background: #f1f5f9;
-          }
-
-          .alerta {
-            background: #fee2e2;
-          }
-
-          .categoria {
-            page-break-before: always;
-          }
-
-          .footer {
-            margin-top: 30px;
-            text-align: center;
-            font-size: 11px;
-            color: #555;
-          }
-        </style>
-      </head>
-
-      <body>
-        <h1>Relatório Geral de Estoque</h1>
-        <h3>Almoxarifado: ${obra.toUpperCase()}</h3>
-        <p style="text-align:center;">
-          Data de geração: ${formatarDataSegura(new Date())}
-        </p>
-        <hr/>
-    `;
-
-    Object.keys(categorias).forEach((cat, index) => {
-      html += `
-        <div class="${index > 0 ? "categoria" : ""}">
-          <h2>Categoria: ${cat.toUpperCase()}</h2>
-
-          <table>
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th width="70">Qtd</th>
-                <th width="70">Mín</th>
-                <th width="140">Atualizado</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
-
-      categorias[cat].forEach((i) => {
-        const alerta = i.quantidade < i.minimo ? "alerta" : "";
-
-        html += `
-          <tr class="${alerta}">
-            <td>${i.nome}</td>
-            <td align="center">${i.quantidade}</td>
-            <td align="center">${i.minimo}</td>
-            <td align="center">${formatarDataSegura(i.updated_at)}</td>
-          </tr>
-        `;
-      });
-
-      html += `
-            </tbody>
-          </table>
-        </div>
-      `;
-    });
-
-    html += `
-        <div class="footer">
-          Sistema de Almoxarifado • Relatório automático
-        </div>
-      </body>
-      </html>
-    `;
-
-    const file = await Print.printToFileAsync({ html });
-    await Sharing.shareAsync(file.uri);
-
   } catch (err) {
-    Alert.alert("Erro", "Falha ao gerar PDF");
-    console.log(err);
+    console.log('Erro inesperado em confirmarSalvar', err);
+    Alert.alert('Erro inesperado ao salvar', err?.message || String(err));
   }
-};
+}
 
+  // Função para abrir modal de novo item
+  function abrirModalNovo() {
+    setEditingItem(null);
+    setNome("");
+    setQuantidade("");
+    setMinimo("");
+    setModalVisible(true);
+  }
 
-    itensFiltrados.forEach((i) => {
-      html += `
-        <tr>
-          <td>${i.nome}</td>
-          <td>${i.quantidade}</td>
-          <td>${i.minimo}</td>
-          <td>${formatarDataSegura(i.updated_at)}</td>
-        </tr>
-      `;
-    });
+  // Função para excluir item
+  async function confirmarExcluir() {
+    if (!modalExcluir.item) return;
+    setModalExcluir({ ...modalExcluir, carregando: true });
+    const { error } = await supabase
+      .from('estoque_itens')
+      .delete()
+      .eq('id', modalExcluir.item.id);
+    if (error) {
+      Alert.alert('Erro ao excluir', error.message);
+      setModalExcluir({ visivel: false, item: null, carregando: false });
+      return;
+    }
+    setModalExcluir({ visivel: false, item: null, carregando: false });
+    carregar();
+  }
 
-    html += `</table></body></html>`;
-
-    const file = await Print.printToFileAsync({ html });
-    await Sharing.shareAsync(file.uri);
-  };
-
+  // Exibir lista de itens
   return (
-    <View style={styles.tabWrap}>
-      {/* Busca */}
-      <View style={styles.searchWrap}>
-        <Ionicons name="search-outline" size={20} color="#999" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Buscar item..."
-          value={busca}
-          onChangeText={setBusca}
-        />
-      </View>
-
-      {/* Botão PDF */}
-      <TouchableOpacity style={styles.modalBtn} onPress={gerarPDF}>
-        <Text style={{ color: "#fff", fontWeight: "bold" }}>
-          Gerar Relatório em PDF
-        </Text>
-      </TouchableOpacity>
-
-      {/* Lista de Itens */}
+    <View style={{ flex: 1, backgroundColor: '#f6f8fa' }}>
+      {podeEditar && (
+        <ButtonEffect
+          style={{
+            margin: 16,
+            marginBottom: 0,
+            backgroundColor: '#2563eb',
+            borderRadius: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+            alignSelf: 'flex-end',
+            paddingVertical: 8,
+            paddingHorizontal: 16,
+            gap: 6,
+          }}
+          onPress={abrirModalNovo}
+        >
+          <Ionicons name="add-circle-outline" size={22} color="#fff" />
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Adicionar</Text>
+        </ButtonEffect>
+      )}
       <FlatList
-        data={itensFiltrados}
-        keyExtractor={(i) => String(i.id)}
-        extraData={itensFiltrados.length}
+        data={itens}
+        keyExtractor={(item) => String(item.id)}
+        ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 32, color: '#888', fontSize: 18, fontWeight: '600', fontFamily: 'System' }}>Nenhum item encontrado.</Text>}
         renderItem={({ item }) => {
-          const alerta = item.quantidade < item.minimo;
-
+          const estoqueBaixo = item.quantidade <= item.minimo;
           return (
             <View
-              style={[
-                styles.card,
-                alerta && { borderColor: "red", borderWidth: 2 },
-              ]}
+              style={{
+                backgroundColor: estoqueBaixo ? '#fff7ed' : '#fff',
+                borderWidth: estoqueBaixo ? 2 : 0,
+                borderColor: estoqueBaixo ? '#f87171' : 'transparent',
+                marginHorizontal: 16,
+                marginVertical: 7,
+                borderRadius: 14,
+                padding: 18,
+                elevation: 2,
+                shadowColor: '#000',
+                shadowOpacity: 0.07,
+                shadowRadius: 6,
+                shadowOffset: { width: 0, height: 2 },
+                flexDirection: 'row',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: 12,
+              }}
             >
               <View style={{ flex: 1 }}>
-                <Text style={styles.itemName}>{item.nome}</Text>
-                <Text style={styles.meta}>Qtd: {item.quantidade}</Text>
-                <Text style={styles.meta}>Mín: {item.minimo}</Text>
-                <Text style={styles.update}>
-                  Atualizado: {formatarDataSegura(item.updated_at)}
+                <Text style={{ fontWeight: 'bold', fontSize: 19, color: '#0b5394', marginBottom: 2, fontFamily: 'System' }}>{item.nome}</Text>
+                <Text style={{ color: estoqueBaixo ? '#b91c1c' : '#334155', fontSize: 16, fontWeight: '700', fontFamily: 'System' }}>
+                  Qtd: <Text style={{ color: estoqueBaixo ? '#b91c1c' : '#0b5394', fontWeight: 'bold' }}>{item.quantidade}</Text>
+                  {'  '}|{'  '}Mín: <Text style={{ color: '#eab308', fontWeight: 'bold' }}>{item.minimo}</Text>
+                  {estoqueBaixo && (
+                    <Text style={{ color: '#b91c1c', fontWeight: 'bold', fontSize: 15 }}>  •  ESTOQUE BAIXO!</Text>
+                  )}
                 </Text>
+                <Text style={{ color: '#64748b', fontSize: 14, marginTop: 2, fontWeight: '500', fontFamily: 'System' }}>Categoria: {item.categoria || '-'}</Text>
               </View>
-
               {podeEditar && (
-                <View style={styles.cardActions}>
-                  <TouchableOpacity onPress={() => alterarQuantidade(item, 1)}>
-                    <Ionicons name="add-circle" size={26} color="#0b5394" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => alterarQuantidade(item, -1)}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 8 }}>
+                  <ButtonEffect
+                    style={{ padding: 7, borderRadius: 10, backgroundColor: '#e0e7ef' }}
+                    onPress={() => abrirModalEditar(item)}
+                    accessibilityLabel="Editar"
                   >
-                    <Ionicons name="remove-circle" size={26} color="#dc2626" />
-                  </TouchableOpacity>
+                    <Ionicons name="create-outline" size={20} color="#0b5394" />
+                  </ButtonEffect>
+                  <ButtonEffect
+                    style={{ padding: 7, borderRadius: 10, backgroundColor: '#fee2e2' }}
+                    onPress={() => setModalExcluir({ visivel: true, item, carregando: false })}
+                    accessibilityLabel="Excluir"
+                  >
+                    <Ionicons name="trash-outline" size={20} color="#b91c1c" />
+                  </ButtonEffect>
                 </View>
               )}
             </View>
           );
         }}
-        ListEmptyComponent={
-          <View style={{ padding: 20 }}>
-            <Text style={{ textAlign: "center", color: "#64748b" }}>
-              Nenhum item encontrado para essa categoria/almoxarifado.
-            </Text>
-          </View>
-        }
       />
 
-      {/* FAB + MODAL NOVO ITEM */}
-      {podeEditar && (
-        <>
-          <TouchableOpacity
-            style={styles.fab}
-            onPress={() => setModalVisible(true)}
-          >
-            <Ionicons name="add" size={26} color="#fff" />
-          </TouchableOpacity>
-
-          <Modal visible={modalVisible} transparent animationType="slide">
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalCard}>
-                <Text style={styles.modalTitle}>Novo Item</Text>
-
-                <TextInput
-                  style={styles.modalInput}
-                  placeholder="Nome"
-                  value={nome}
-                  onChangeText={setNome}
-                />
-                <TextInput
-                  style={styles.modalInput}
-                  placeholder="Quantidade"
-                  keyboardType="numeric"
-                  value={quantidade}
-                  onChangeText={setQuantidade}
-                />
-                <TextInput
-                  style={styles.modalInput}
-                  placeholder="Mínimo"
-                  keyboardType="numeric"
-                  value={minimo}
-                  onChangeText={setMinimo}
-                />
-
-                <TouchableOpacity
-                  style={styles.modalBtn}
-                  onPress={confirmarSalvar}
-                >
-                  <Text style={{ color: "#fff", fontWeight: "bold" }}>
-                    Salvar
-                  </Text>
-                </TouchableOpacity>
-              </View>
+      {/* Modal de Adicionar/Editar */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.18)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '88%' }}>
+            <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 16, color: '#0b5394' }}>{editingItem ? 'Editar Item' : 'Novo Item'}</Text>
+            <TextInput
+              placeholder="Nome do item"
+              value={nome}
+              onChangeText={setNome}
+              style={{ borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 16 }}
+            />
+            <TextInput
+              placeholder="Quantidade"
+              value={quantidade}
+              onChangeText={setQuantidade}
+              keyboardType="numeric"
+              style={{ borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, padding: 10, marginBottom: 12, fontSize: 16 }}
+            />
+            <TextInput
+              placeholder="Mínimo"
+              value={minimo}
+              onChangeText={setMinimo}
+              keyboardType="numeric"
+              style={{ borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, padding: 10, marginBottom: 18, fontSize: 16 }}
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+              <ButtonEffect
+                style={{ backgroundColor: '#e5e7eb', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 18 }}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={{ color: '#222', fontWeight: 'bold' }}>Cancelar</Text>
+              </ButtonEffect>
+              <ButtonEffect
+                style={{ backgroundColor: '#2563eb', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 18 }}
+                onPress={confirmarSalvar}
+              >
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>{editingItem ? 'Salvar' : 'Adicionar'}</Text>
+              </ButtonEffect>
             </View>
-          </Modal>
-        </>
-      )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de Exclusão */}
+      <Modal
+        visible={modalExcluir.visivel}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setModalExcluir({ visivel: false, item: null, carregando: false })}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.18)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '85%' }}>
+            <Text style={{ fontWeight: 'bold', fontSize: 17, marginBottom: 18, color: '#b91c1c' }}>Confirmar exclusão?</Text>
+            <Text style={{ fontSize: 16, marginBottom: 18 }}>Tem certeza que deseja excluir o item <Text style={{ fontWeight: 'bold' }}>{modalExcluir.item?.nome}</Text>?</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+              <ButtonEffect
+                style={{ backgroundColor: '#e5e7eb', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 18 }}
+                onPress={() => setModalExcluir({ visivel: false, item: null, carregando: false })}
+                disabled={modalExcluir.carregando}
+              >
+                <Text style={{ color: '#222', fontWeight: 'bold' }}>Cancelar</Text>
+              </ButtonEffect>
+              <ButtonEffect
+                style={{ backgroundColor: '#b91c1c', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 18 }}
+                onPress={confirmarExcluir}
+                disabled={modalExcluir.carregando}
+              >
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>{modalExcluir.carregando ? 'Excluindo...' : 'Excluir'}</Text>
+              </ButtonEffect>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -462,6 +353,7 @@ const gerarPDF = async () => {
 export default function EstoqueScreen() {
   const [podeEditar, setPodeEditar] = useState(false);
   const [obraSelecionada, setObraSelecionada] = useState(null);
+  const navigation = useNavigation();
 
   useEffect(() => {
     const loadRole = async () => {
@@ -474,21 +366,50 @@ export default function EstoqueScreen() {
   if (!obraSelecionada) {
     return (
       <View style={styles.selectWrap}>
-        <Text style={styles.selectTitle}>Selecione o Almoxarifado</Text>
+        {/* Botão voltar ao menu */}
+        <ButtonEffect
+          style={{
+            position: 'absolute',
+            top: 32,
+            left: 24,
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: '#fff',
+            borderRadius: 18,
+            paddingVertical: 8,
+            paddingHorizontal: 16,
+            elevation: 6,
+            shadowColor: '#000',
+            shadowOpacity: 0.12,
+            shadowRadius: 6,
+            shadowOffset: { width: 0, height: 2 },
+            zIndex: 10,
+          }}
+          onPress={() => {
+            navigation.reset({ index: 0, routes: [{ name: 'DrawerNavigator', params: { screen: 'Dashboard' } }] });
+          }}
+        >
+          <Ionicons name="arrow-back" size={20} color="#0b5394" style={{ marginRight: 6 }} />
+          <Text style={{ color: '#0b5394', fontWeight: 'bold', fontSize: 15 }}>Voltar ao Menu</Text>
+        </ButtonEffect>
 
-        <TouchableOpacity
-          style={styles.selectBtn}
+        <Text style={[styles.selectTitle, { marginTop: 60 }]}>Selecione o Almoxarifado</Text>
+
+        <ButtonEffect
+          style={[styles.selectBtn, { marginBottom: 28 }]}
           onPress={() => setObraSelecionada("masters")}
         >
+          <Ionicons name="business-outline" size={22} color="#fff" style={{ marginBottom: 4 }} />
           <Text style={styles.selectBtnText}>Masters</Text>
-        </TouchableOpacity>
+        </ButtonEffect>
 
-        <TouchableOpacity
+        <ButtonEffect
           style={styles.selectBtn}
           onPress={() => setObraSelecionada("honda")}
         >
+          <Ionicons name="business-outline" size={22} color="#fff" style={{ marginBottom: 4 }} />
           <Text style={styles.selectBtnText}>Honda</Text>
-        </TouchableOpacity>
+        </ButtonEffect>
       </View>
     );
   }
@@ -496,17 +417,58 @@ export default function EstoqueScreen() {
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => setObraSelecionada(null)}>
+        <ButtonEffect onPress={() => setObraSelecionada(null)}>
           <Ionicons name="arrow-back-outline" size={24} color="#fff" />
-        </TouchableOpacity>
+        </ButtonEffect>
 
         <Text style={styles.headerTitle}>
           Estoque - {obraSelecionada.toUpperCase()}
         </Text>
       </View>
 
-      <Tab.Navigator>
-        <Tab.Screen name="Elétrica">
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          tabBarIcon: ({ color, focused }) => {
+            let iconName;
+            let iconColor = focused ? '#2563eb' : '#b0b0b0';
+            let iconSize = 22;
+            if (route.name === 'Elétrica') {
+              iconName = 'flash-outline';
+            } else if (route.name === 'Mecânica') {
+              iconName = 'construct-outline';
+            } else if (route.name === 'Pintura') {
+              iconName = 'color-palette-outline';
+            } else if (route.name === 'Outros') {
+              iconName = 'apps-outline';
+            }
+            return <Ionicons name={iconName} size={iconSize} color={iconColor} style={{ marginBottom: -2 }} />;
+          },
+          tabBarLabelStyle: {
+            fontWeight: 'bold',
+            fontSize: 15,
+            fontFamily: 'System',
+            marginTop: 2,
+          },
+          tabBarActiveTintColor: '#2563eb',
+          tabBarInactiveTintColor: '#b0b0b0',
+          tabBarShowIcon: true,
+          tabBarIndicatorStyle: {
+            backgroundColor: '#2563eb',
+            height: 4,
+            borderRadius: 2,
+          },
+          tabBarStyle: {
+            backgroundColor: '#fff',
+            borderBottomWidth: 0.5,
+            borderColor: '#e5e7eb',
+            elevation: 0,
+          },
+        })}
+      >
+        <Tab.Screen
+          name="Elétrica"
+          options={{ tabBarLabel: 'Elétrica' }}
+        >
           {() => (
             <CategoriaTab
               categoriaKey="eletrica"
@@ -515,8 +477,10 @@ export default function EstoqueScreen() {
             />
           )}
         </Tab.Screen>
-
-        <Tab.Screen name="Mecânica">
+        <Tab.Screen
+          name="Mecânica"
+          options={{ tabBarLabel: 'Mecânica' }}
+        >
           {() => (
             <CategoriaTab
               categoriaKey="mecanica"
@@ -525,8 +489,10 @@ export default function EstoqueScreen() {
             />
           )}
         </Tab.Screen>
-
-        <Tab.Screen name="Pintura">
+        <Tab.Screen
+          name="Pintura"
+          options={{ tabBarLabel: 'Pintura' }}
+        >
           {() => (
             <CategoriaTab
               categoriaKey="pintura"
@@ -535,8 +501,10 @@ export default function EstoqueScreen() {
             />
           )}
         </Tab.Screen>
-
-        <Tab.Screen name="Outros">
+        <Tab.Screen
+          name="Outros"
+          options={{ tabBarLabel: 'Outros' }}
+        >
           {() => (
             <CategoriaTab
               categoriaKey="outros"
@@ -549,3 +517,4 @@ export default function EstoqueScreen() {
     </View>
   );
 }
+ 

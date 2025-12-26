@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from "react";
 import {
+  TouchableOpacity,
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   Alert,
   ScrollView,
   FlatList,
   Modal,
 } from "react-native";
+import ButtonEffect from "../components/ui/ButtonEffect";
+import { VoltarDashboardBtn } from "../components/ui/VoltarDashboardBtn";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../services/supabase";
 import { styles } from "../styles/MovimentacoesEstoqueStyle";
@@ -106,21 +108,29 @@ export default function MovimentacoesEstoque() {
   if (!obraSelecionada) {
     return (
       <View style={styles.selectWrap}>
-        <Text style={styles.selectTitle}>Selecione o Almoxarifado</Text>
-
-        <TouchableOpacity
-          style={styles.selectBtn}
+        <VoltarDashboardBtn
+          onPress={() => {
+            // Volta para o Dashboard
+            if (navigation && navigation.reset) {
+              navigation.reset({ index: 0, routes: [{ name: 'DrawerNavigator', params: { screen: 'Dashboard' } }] });
+            }
+          }}
+        />
+        <Text style={[styles.selectTitle, { marginTop: 60 }]}>Selecione o Almoxarifado</Text>
+        <ButtonEffect
+          style={[styles.selectBtn, { marginBottom: 28 }]}
           onPress={() => setObraSelecionada("masters")}
         >
-          <Text style={styles.selectBtnText}>Masters</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
+          <Ionicons name="business-outline" size={22} color="#fff" style={{ marginBottom: 4 }} />
+          <Text style={styles.selectBtnText}>Almoxarifado Masters</Text>
+        </ButtonEffect>
+        <ButtonEffect
           style={styles.selectBtn}
           onPress={() => setObraSelecionada("honda")}
         >
-          <Text style={styles.selectBtnText}>Honda</Text>
-        </TouchableOpacity>
+          <Ionicons name="business-outline" size={22} color="#fff" style={{ marginBottom: 4 }} />
+          <Text style={styles.selectBtnText}>Almoxarifado Honda</Text>
+        </ButtonEffect>
       </View>
     );
   }

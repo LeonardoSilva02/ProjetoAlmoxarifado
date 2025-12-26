@@ -4,10 +4,12 @@
     "slug": "ProjetoAlmoxarifado",
     "version": "1.0.0",
     "orientation": "portrait",
+
     "icon": "./assets/logo-masters.png",
     "userInterfaceStyle": "light",
     "scheme": "almoxarifado-masters",
-    "newArchEnabled": false,
+
+    "newArchEnabled": true,
 
     "splash": {
       "image": "./assets/logo-masters.png",
@@ -16,17 +18,17 @@
     },
 
     "android": {
+      "package": "com.leonardosilva02.projetoalmoxarifado",
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo-masters.png",
         "backgroundColor": "#0b5394"
       },
-      "package": "com.leonardosilva02.ProjetoAlmoxarifado",
       "permissions": [],
       "softwareKeyboardLayoutMode": "pan"
     },
 
     "ios": {
-      "bundleIdentifier": "com.leonardosilva02.ProjetoAlmoxarifado",
+      "bundleIdentifier": "com.leonardosilva02.projetoalmoxarifado",
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -34,29 +36,28 @@
     },
 
     "web": {
-      "favicon": "./assets/logo-masters.png",
       "bundler": "metro",
       "output": "single",
+      "favicon": "./assets/logo-masters.png",
       "backgroundColor": "#ffffff",
       "meta": {
         "viewport": "width=device-width, initial-scale=1, maximum-scale=1"
       }
     },
 
-    "experiments": {
-      "turboModules": false,
-      "reactServerComponents": false,
-      "typedRoutes": false
+    "updates": {
+      "fallbackToCacheTimeout": 0
     },
+
+    "plugins": [
+      "expo-font",
+      "expo-web-browser"
+    ],
 
     "extra": {
       "eas": {
         "projectId": "e53629f2-e5fa-4623-ab5c-61907c1aa295"
       }
-    },
-
-    "updates": {
-      "fallbackToCacheTimeout": 0
     }
   }
 }

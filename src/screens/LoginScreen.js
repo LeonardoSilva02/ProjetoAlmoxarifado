@@ -4,7 +4,6 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -13,10 +12,11 @@ import {
   Easing,
   Alert,
 } from "react-native";
+import ButtonEffect from "../components/ui/ButtonEffect";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../services/supabase";
-import styles from "../styles/loginStyles"; // ✅ STYLE SEPARADO
+import styles from "../styles/loginStyles";
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState("");
@@ -24,7 +24,6 @@ export default function LoginScreen({ navigation }) {
   const [isChecking, setIsChecking] = useState(true);
   const currentYear = new Date().getFullYear();
 
-  // ✅ VERIFICAR SESSÃO AUTOMÁTICA
   useEffect(() => {
     const verificarSessao = async () => {
       try {
@@ -36,60 +35,39 @@ export default function LoginScreen({ navigation }) {
             index: 0,
             routes: [{ name: "DrawerNavigator" }],
           });
-        } else {
-          setIsChecking(false);
-        }
-      } catch (error) {
-        console.log("Erro ao verificar sessão:", error);
+        } else setIsChecking(false);
+      } catch {
         setIsChecking(false);
       }
     };
-
     verificarSessao();
   }, []);
 
-  // ✅ LOGIN SUPABASE
   const handleLogin = async () => {
-    try {
-      if (!username.trim() || !password.trim()) {
-        Alert.alert("Erro", "Preencha todos os campos.");
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from("usuarios")
-        .select("id, senha_hash, role")
-        .eq("email", username.trim())
-        .single();
-
-      if (error || !data) {
-        Alert.alert("Erro", "Usuário não encontrado ❌");
-        return;
-      }
-
-      if (password.trim() !== data.senha_hash) {
-        Alert.alert("Erro", "Senha incorreta ❌");
-        return;
-      }
-
-      await AsyncStorage.multiSet([
-        ["userRole", data.role],
-        ["loginType", "supabase"],
-        ["userId", String(data.id)],
-      ]);
-
-      // ✅ SEMPRE NAVEGA PARA O MESMO DRAWER
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "DrawerNavigator" }],
-      });
-    } catch (err) {
-      console.log("Erro no login:", err);
-      Alert.alert("Erro", "Falha no login.");
+    if (!username.trim() || !password.trim()) {
+      Alert.alert("Erro", "Preencha todos os campos.");
+      return;
     }
+
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("id, senha_hash, role")
+      .eq("email", username.trim())
+      .single();
+
+    if (error || !data) return Alert.alert("Erro", "Usuário não encontrado ❌");
+    if (password.trim() !== data.senha_hash)
+      return Alert.alert("Erro", "Senha incorreta ❌");
+
+    await AsyncStorage.multiSet([
+      ["userRole", data.role],
+      ["loginType", "supabase"],
+      ["userId", String(data.id)],
+    ]);
+
+    navigation.reset({ index: 0, routes: [{ name: "DrawerNavigator" }] });
   };
 
-  // ✅ ANIMAÇÕES
   const fadeLogo = useRef(new Animated.Value(0)).current;
   const fadeContent = useRef(new Animated.Value(0)).current;
   const gradientAnim = useRef(new Animated.Value(0)).current;
@@ -97,88 +75,33 @@ export default function LoginScreen({ navigation }) {
   useEffect(() => {
     if (!isChecking) {
       Animated.sequence([
-        Animated.timing(fadeLogo, {
-          toValue: 1,
-          duration: 1200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeContent, {
-          toValue: 1,
-          duration: 900,
-          useNativeDriver: true,
-        }),
+        Animated.timing(fadeLogo, { toValue: 1, duration: 1200, useNativeDriver: true }),
+        Animated.timing(fadeContent, { toValue: 1, duration: 900, useNativeDriver: true }),
       ]).start();
     }
 
     Animated.loop(
       Animated.sequence([
-        Animated.timing(gradientAnim, {
-          toValue: 1,
-          duration: 4500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: false,
-        }),
-        Animated.timing(gradientAnim, {
-          toValue: 0,
-          duration: 4500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: false,
-        }),
+        Animated.timing(gradientAnim, { toValue: 1, duration: 4500, useNativeDriver: false }),
+        Animated.timing(gradientAnim, { toValue: 0, duration: 4500, useNativeDriver: false }),
       ])
     ).start();
   }, [isChecking]);
 
-  // ✅ TELA DE VERIFICAÇÃO
   if (isChecking) {
     return (
-      <View
-        style={[
-          styles.container,
-          {
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "#0b5394",
-          },
-        ]}
-      >
-        <StatusBar barStyle="light-content" backgroundColor="#0b5394" />
-        <Image
-          source={require("../../assets/logo-masters.png")}
-          style={[styles.logo, { marginBottom: 20 }]}
-          resizeMode="contain"
-        />
-        <Text style={{ color: "#fff", fontSize: 16 }}>
-          Verificando sessão...
-        </Text>
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+        <Image source={require("../../assets/logo-masters.png")} style={styles.logo} />
+        <Text style={{ color: "#fff" }}>Verificando sessão...</Text>
       </View>
     );
   }
 
-  const bg1 = gradientAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["#0b5394", "#1a73e8"],
-  });
-
-  const bg2 = gradientAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["#042e5f", "#155db8"],
-  });
-
   return (
-    <Animated.View style={[styles.container, { backgroundColor: bg1 }]}>
-      <Animated.View
-        style={[styles.animatedBackground, { backgroundColor: bg2 }]}
-      />
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.inner}
-      >
+    <Animated.View style={styles.container}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.inner}>
         <Animated.View style={[styles.logoContainer, { opacity: fadeLogo }]}>
-          <Image
-            source={require("../../assets/logo-masters.png")}
-            style={styles.logo}
-          />
+          <Image source={require("../../assets/logo-masters.png")} style={styles.logo} />
           <Text style={styles.appName}>Sistema de Almoxarifado</Text>
         </Animated.View>
 
@@ -208,37 +131,31 @@ export default function LoginScreen({ navigation }) {
             />
           </View>
 
-          <TouchableOpacity onPress={handleLogin}>
-            <LinearGradient
-              colors={["#1a73e8", "#0b5394"]}
-              style={styles.buttonGradient}
+          <View style={styles.buttonArea}>
+            <ButtonEffect onPress={handleLogin} style={styles.buttonBase}>
+              <LinearGradient colors={["#1a73e8", "#0b5394"]} style={styles.buttonPrimary}>
+                <Ionicons name="log-in-outline" size={26} color="#fff" style={{ marginRight: 8 }} />
+                <Text style={styles.buttonText}>Entrar no Sistema</Text>
+              </LinearGradient>
+            </ButtonEffect>
+
+            <ButtonEffect
+              style={[styles.buttonBase, styles.buttonSecondary]}
+              onPress={async () => {
+                await AsyncStorage.multiSet([
+                  ["userRole", "viewer"],
+                  ["loginType", "guest"],
+                ]);
+                navigation.reset({ index: 0, routes: [{ name: "DrawerNavigator" }] });
+              }}
             >
-              <Text style={styles.buttonText}>Entrar</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-
-          {/* ✅ VISITANTE */}
-          <TouchableOpacity
-            style={styles.googleButton}
-            onPress={async () => {
-              await AsyncStorage.multiSet([
-                ["userRole", "viewer"],
-                ["loginType", "guest"],
-              ]);
-
-              navigation.reset({
-                index: 0,
-                routes: [{ name: "DrawerNavigator" }],
-              });
-            }}
-          >
-            <Text style={styles.googleText}>Entrar como visitante</Text>
-          </TouchableOpacity>
+              <Ionicons name="eye-outline" size={24} color="#0b5394" style={{ marginRight: 8 }} />
+              <Text style={styles.secondaryText}>Entrar como Visitante</Text>
+            </ButtonEffect>
+          </View>
         </Animated.View>
 
-        <Text style={styles.footerText}>
-          © {currentYear} Masters Engenharia
-        </Text>
+        <Text style={styles.footerText}>© {currentYear} Masters Engenharia</Text>
       </KeyboardAvoidingView>
     </Animated.View>
   );

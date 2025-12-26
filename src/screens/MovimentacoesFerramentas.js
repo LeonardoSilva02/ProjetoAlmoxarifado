@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
+import { useNavigation } from "@react-navigation/native";
 import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
   FlatList,
   Modal,
   Alert,
+  Image,
 } from "react-native";
+import ButtonEffect from "../components/ui/ButtonEffect";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../services/supabase";
@@ -150,25 +152,56 @@ export default function MovimentacoesFerramentas() {
   const movsAtivos = movs.filter((m) => !m.data_devolucao);
   const movsHistorico = movs.filter((m) => m.data_devolucao);
 
+  const navigation = useNavigation();
+
   /* =================== SELEÇÃO DE ALMOX =================== */
   if (!obraSelecionada) {
     return (
       <View style={styles.selectWrap}>
-        <Text style={styles.selectTitle}>Selecione o Almoxarifado</Text>
+        {/* Botão voltar ao menu */}
+        <ButtonEffect
+          style={{
+            position: 'absolute',
+            top: 32,
+            left: 24,
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: '#fff',
+            borderRadius: 18,
+            paddingVertical: 8,
+            paddingHorizontal: 16,
+            elevation: 6,
+            shadowColor: '#000',
+            shadowOpacity: 0.12,
+            shadowRadius: 6,
+            shadowOffset: { width: 0, height: 2 },
+            zIndex: 10,
+          }}
+          onPress={() => {
+            navigation.reset({ index: 0, routes: [{ name: 'DrawerNavigator', params: { screen: 'Dashboard' } }] });
+          }}
+        >
+          <Ionicons name="arrow-back" size={20} color="#0b5394" style={{ marginRight: 6 }} />
+          <Text style={{ color: '#0b5394', fontWeight: 'bold', fontSize: 15 }}>Voltar ao Menu</Text>
+        </ButtonEffect>
 
-        <TouchableOpacity
-          style={styles.selectBtn}
+        <Text style={[styles.selectTitle, { marginTop: 60 }]}>Selecione o Almoxarifado</Text>
+
+        <ButtonEffect
+          style={[styles.selectBtn, { marginBottom: 28 }]}
           onPress={() => setObraSelecionada("masters")}
         >
+          <Ionicons name="business-outline" size={22} color="#fff" style={{ marginBottom: 4 }} />
           <Text style={styles.selectBtnText}>Almoxarifado Masters</Text>
-        </TouchableOpacity>
+        </ButtonEffect>
 
-        <TouchableOpacity
+        <ButtonEffect
           style={styles.selectBtn}
           onPress={() => setObraSelecionada("honda")}
         >
+          <Ionicons name="business-outline" size={22} color="#fff" style={{ marginBottom: 4 }} />
           <Text style={styles.selectBtnText}>Almoxarifado Honda</Text>
-        </TouchableOpacity>
+        </ButtonEffect>
       </View>
     );
   }
@@ -208,36 +241,40 @@ export default function MovimentacoesFerramentas() {
           </Text>
         </View>
 
+        {(() => {
+          // Imagem removida conforme solicitado
+          // ...nada será exibido aqui...
+        })()}
+
         {!item.data_devolucao && !readOnly && (
-          <TouchableOpacity
+          <ButtonEffect
             onPress={() => registrarDevolucao(item)}
             style={styles.btnDevolver}
           >
             <Ionicons name="checkmark-circle" size={26} color="#fff" />
-          </TouchableOpacity>
+          </ButtonEffect>
         )}
       </View>
     );
   };
 
-  /* =================== TELA PRINCIPAL =================== */
   return (
     <View style={{ flex: 1 }}>
       {/* 🔥 ABAS */}
       <View style={styles.tabs}>
-        <TouchableOpacity
+        <ButtonEffect
           style={[styles.tab, aba === "ativos" && styles.tabActive]}
           onPress={() => setAba("ativos")}
         >
           <Text style={styles.tabText}>Retiradas</Text>
-        </TouchableOpacity>
+        </ButtonEffect>
 
-        <TouchableOpacity
+        <ButtonEffect
           style={[styles.tab, aba === "historico" && styles.tabActive]}
           onPress={() => setAba("historico")}
         >
           <Text style={styles.tabText}>Histórico</Text>
-        </TouchableOpacity>
+        </ButtonEffect>
       </View>
 
       <FlatList
@@ -248,9 +285,9 @@ export default function MovimentacoesFerramentas() {
       />
 
       {!readOnly && (
-        <TouchableOpacity style={styles.fab} onPress={() => setModal(true)}>
+        <ButtonEffect style={styles.fab} onPress={() => setModal(true)}>
           <Ionicons name="add" size={30} color="#fff" />
-        </TouchableOpacity>
+        </ButtonEffect>
       )}
 
       {/* ================= MODAL ================= */}
@@ -283,7 +320,7 @@ export default function MovimentacoesFerramentas() {
               style={{ maxHeight: 180 }}
               keyboardShouldPersistTaps="handled"
               renderItem={({ item }) => (
-                <TouchableOpacity
+                <ButtonEffect
                   style={[
                     styles.selectItem,
                     ferramentaSel?.id === item.id && {
@@ -300,7 +337,7 @@ export default function MovimentacoesFerramentas() {
                   <Text>
                     {item.nome} – {item.patrimonio}
                   </Text>
-                </TouchableOpacity>
+                </ButtonEffect>
               )}
             />
 
@@ -312,21 +349,23 @@ export default function MovimentacoesFerramentas() {
             />
 
             <View style={styles.modalActions}>
-              <TouchableOpacity
+              <ButtonEffect
                 style={[styles.modalBtn, { backgroundColor: "#ccc" }]}
                 onPress={() => setModal(false)}
               >
                 <Text>Cancelar</Text>
-              </TouchableOpacity>
+              </ButtonEffect>
 
-              <TouchableOpacity
+              <ButtonEffect
                 style={[styles.modalBtn, { backgroundColor: "#0b5394" }]}
                 onPress={registrarRetirada}
               >
                 <Text style={{ color: "#fff" }}>Salvar</Text>
-              </TouchableOpacity>
+              </ButtonEffect>
+
             </View>
           </View>
+
         </View>
       </Modal>
     </View>

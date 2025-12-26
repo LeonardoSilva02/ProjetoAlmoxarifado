@@ -72,21 +72,23 @@ function CustomDrawerContent(props) {
       <View style={styles.footer}>
         <View style={styles.separator} />
 
-        <DrawerItem
-          label="Sair"
-          labelStyle={styles.logoutLabel}
-          style={styles.logoutButton}
-          icon={({ size }) => (
-            <Ionicons name="exit-outline" color="#fff" size={size} />
-          )}
-          onPress={async () => {
-            await AsyncStorage.clear();
-            props.navigation.reset({
-              index: 0,
-              routes: [{ name: "Login" }],
-            });
-          }}
-        />
+        <View style={[styles.logoutButton, { flexDirection: 'row', alignItems: 'center' }]}> 
+          <Ionicons name="exit-outline" color="#fff" size={28} style={{ marginRight: 8 }} />
+          <Text style={styles.logoutLabel}>Sair</Text>
+          <View style={{ flex: 1 }} />
+          <DrawerItem
+            label=""
+            style={{ position: 'absolute', width: '100%', height: '100%', opacity: 0 }}
+            onPress={async () => {
+              await AsyncStorage.clear();
+              props.navigation.reset({
+                index: 0,
+                routes: [{ name: "Login" }],
+              });
+            }}
+            pressColor="#ffb3b3"
+          />
+        </View>
 
         <Text style={styles.versionText}>Versão 1.0.0</Text>
       </View>

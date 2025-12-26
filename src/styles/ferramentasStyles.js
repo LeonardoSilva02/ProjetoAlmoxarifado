@@ -98,6 +98,10 @@ export default StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     borderWidth: 1,
     borderColor: "#e5ebf4",
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
   },
 
   cardRelatorio: {
@@ -122,10 +126,30 @@ export default StyleSheet.create({
     marginBottom: 2,
   },
 
+  metaStrong: {
+    fontWeight: "900",
+    color: "#475569",
+  },
+
   situacao: {
     fontWeight: "800",
     marginTop: 8,
     fontSize: 14,
+  },
+
+  /* =========================
+     AÇÕES (EDITAR/EXCLUIR)
+  ========================= */
+  actionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingLeft: 8,
+  },
+
+  iconBtn: {
+    padding: 6,
+    borderRadius: 10,
   },
 
   /* =========================
@@ -218,6 +242,14 @@ export default StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
   },
 
+  modalClose: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    padding: 6,
+    zIndex: 20,
+  },
+
   modalTitle: {
     fontSize: 20,
     fontWeight: "900",
@@ -237,6 +269,15 @@ export default StyleSheet.create({
     borderColor: "#dde3ee",
   },
 
+  pickerWrap: {
+    borderRadius: 14,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#dde3ee",
+    backgroundColor: "#f3f6fb",
+    marginBottom: 14,
+  },
+
   modalBtn: {
     backgroundColor: "#0b5394",
     paddingVertical: 14,
@@ -249,6 +290,30 @@ export default StyleSheet.create({
     color: "#fff",
     fontWeight: "900",
     fontSize: 16,
+  },
+
+  webHint: {
+    marginTop: 10,
+    fontSize: 12,
+    color: "#64748b",
+    textAlign: "center",
+  },
+
+  /* =========================
+     RESUMO RELATÓRIO
+  ========================= */
+  resumoWrap: {
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 6,
+  },
+
+  resumoCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 14,
+    padding: 12,
+    borderLeftWidth: 6,
+    borderLeftColor: "#0b5394",
   },
 
   /* =========================

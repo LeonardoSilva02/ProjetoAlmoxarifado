@@ -55,15 +55,25 @@ export default StyleSheet.create({
 
   logoutButton: {
     backgroundColor: "#ff4d4d",
-    borderRadius: 10,
-    height: 42,
+    borderRadius: 12,
+    height: 52,
+    marginTop: 10,
+    marginBottom: 2,
     justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
+    shadowColor: '#b00020',
+    shadowOpacity: 0.13,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
   },
 
   logoutLabel: {
     color: "#fff",
-    fontWeight: "700",
-    fontSize: 14,
+    fontWeight: "bold",
+    fontSize: 16,
+    marginLeft: 6,
+    letterSpacing: 0.2,
   },
 
   versionText: {

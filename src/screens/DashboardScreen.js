@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  TouchableOpacity,
   ScrollView,
   Alert,
   Image,
+  Platform,
 } from "react-native";
+import ButtonEffect from "../components/ui/ButtonEffect";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -42,9 +43,18 @@ export default function DashboardScreen({ navigation }) {
     navigation.navigate(screen);
   };
 
+  // Efeito visual de toque/hover nos cards (web)
+  const [hovered, setHovered] = useState(null);
+  const cardStyle = (key) => [
+    styles.card,
+    Platform.OS === 'web' && hovered === key
+      ? { transform: [{ scale: 1.04 }], boxShadow: '0 6px 24px #0b539422' }
+      : {},
+  ];
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* ✅ HEADER */}
+      {/* HEADER */}
       <LinearGradient colors={["#0b5394", "#06437a"]} style={styles.header}>
         <Image
           source={require("../../assets/logo-masters.png")}
@@ -57,40 +67,46 @@ export default function DashboardScreen({ navigation }) {
         </Text>
       </LinearGradient>
 
-      {/* ✅ TÍTULO DA ÁREA */}
+      {/* TÍTULO DA ÁREA */}
       <View style={styles.sectionTitleWrap}>
         <Text style={styles.sectionTitle}>Funções do Sistema</Text>
       </View>
 
-      {/* ✅ GRID PRINCIPAL */}
+      {/* GRID PRINCIPAL */}
       <View style={styles.grid}>
         {/* ESTOQUE */}
-        <TouchableOpacity
-          style={styles.card}
+        <ButtonEffect
+          style={cardStyle('estoque')}
           onPress={() => handleNavigate("Estoque")}
+          onMouseEnter={() => setHovered('estoque')}
+          onMouseLeave={() => setHovered(null)}
         >
           <View style={styles.iconCircle}>
             <Ionicons name="cube-outline" size={36} color="#0b5394" />
           </View>
           <Text style={styles.cardText}>Estoque</Text>
-        </TouchableOpacity>
+        </ButtonEffect>
 
         {/* FERRAMENTAS */}
-        <TouchableOpacity
-          style={styles.card}
+        <ButtonEffect
+          style={cardStyle('ferramentas')}
           onPress={() => handleNavigate("Ferramentas")}
+          onMouseEnter={() => setHovered('ferramentas')}
+          onMouseLeave={() => setHovered(null)}
         >
           <View style={styles.iconCircle}>
             <Ionicons name="construct-outline" size={36} color="#0b5394" />
           </View>
           <Text style={styles.cardText}>Ferramentas</Text>
-        </TouchableOpacity>
+        </ButtonEffect>
 
-        {/* ✅ MOVIMENTAÇÕES DE FERRAMENTAS (SOMENTE ADMIN) */}
+        {/* MOVIMENTAÇÕES DE FERRAMENTAS (SOMENTE ADMIN) */}
         {!isViewer && (
-          <TouchableOpacity
-            style={styles.card}
+          <ButtonEffect
+            style={cardStyle('movferramentas')}
             onPress={() => handleNavigate("MovimentacoesFerramentas")}
+            onMouseEnter={() => setHovered('movferramentas')}
+            onMouseLeave={() => setHovered(null)}
           >
             <View style={styles.iconCircle}>
               <Ionicons
@@ -102,14 +118,16 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.cardText}>
               Movimentações de Ferramentas
             </Text>
-          </TouchableOpacity>
+          </ButtonEffect>
         )}
 
-        {/* ✅ MOVIMENTAÇÕES DE ESTOQUE (SOMENTE ADMIN) */}
+        {/* MOVIMENTAÇÕES DE ESTOQUE (SOMENTE ADMIN) */}
         {!isViewer && (
-          <TouchableOpacity
-            style={styles.card}
+          <ButtonEffect
+            style={cardStyle('movestoque')}
             onPress={() => handleNavigate("MovimentacoesEstoque")}
+            onMouseEnter={() => setHovered('movestoque')}
+            onMouseLeave={() => setHovered(null)}
           >
             <View style={styles.iconCircle}>
               <Ionicons
@@ -121,21 +139,21 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.cardText}>
               Movimentações de Estoque
             </Text>
-          </TouchableOpacity>
+          </ButtonEffect>
         )}
       </View>
 
-      {/* ✅ LOGOUT */}
-      <TouchableOpacity
+      {/* LOGOUT */}
+      <ButtonEffect
         style={styles.logoutButton}
         onPress={async () => {
           await AsyncStorage.clear();
           navigation.reset({ index: 0, routes: [{ name: "Login" }] });
         }}
       >
-        <Ionicons name="exit-outline" size={24} color="#fff" />
+        <Ionicons name="exit-outline" size={28} color="#fff" />
         <Text style={styles.logoutText}>Sair</Text>
-      </TouchableOpacity>
+      </ButtonEffect>
     </ScrollView>
   );
 }

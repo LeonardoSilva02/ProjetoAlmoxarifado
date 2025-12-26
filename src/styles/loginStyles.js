@@ -1,9 +1,6 @@
-import { StyleSheet, Platform } from "react-native";
+import { StyleSheet } from "react-native";
 
 export default StyleSheet.create({
-  /* =========================
-     CONTAINER GERAL
-  ========================= */
   container: {
     flex: 1,
     backgroundColor: "#0b5394",
@@ -21,9 +18,6 @@ export default StyleSheet.create({
     paddingHorizontal: 22,
   },
 
-  /* =========================
-     LOGO
-  ========================= */
   logoContainer: {
     alignItems: "center",
     marginBottom: 30,
@@ -43,9 +37,6 @@ export default StyleSheet.create({
     letterSpacing: 0.6,
   },
 
-  /* =========================
-     CARD LOGIN
-  ========================= */
   card: {
     backgroundColor: "#ffffff",
     width: "100%",
@@ -53,7 +44,6 @@ export default StyleSheet.create({
     borderRadius: 28,
     paddingVertical: 38,
     paddingHorizontal: 26,
-
     elevation: 12,
     shadowColor: "#000",
     shadowOpacity: 0.18,
@@ -76,13 +66,9 @@ export default StyleSheet.create({
     textAlign: "center",
   },
 
-  /* =========================
-     INPUTS
-  ========================= */
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    width: "100%",
     backgroundColor: "#f1f5f9",
     borderRadius: 16,
     borderWidth: 1,
@@ -94,86 +80,64 @@ export default StyleSheet.create({
 
   input: {
     flex: 1,
-    height: 60,
-    color: "#0f172a",
     fontSize: 17,
     paddingLeft: 10,
+    color: "#0f172a",
   },
 
-  /* =========================
-     ÁREA DOS BOTÕES
-  ========================= */
   buttonArea: {
-    marginTop: 14,
+    marginTop: 20,
     width: "100%",
-    alignItems: "center",
   },
 
-  /* =========================
-     BOTÕES BASE (modelo)
-  ========================= */
   buttonBase: {
     width: "100%",
-    height: 78,              // 🔥 BOTÃO MAIOR
-    borderRadius: 20,        // 🔥 MAIS ARREDONDADO
+    height: 72,
+    borderRadius: 22,
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
-
     marginTop: 18,
-
-    elevation: 12,
+    elevation: 10,
     shadowColor: "#000",
     shadowOpacity: 0.25,
     shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 5 },
   },
 
-  /* =========================
-     BOTÃO ENTRAR
-  ========================= */
   buttonPrimary: {
     width: "100%",
     height: "100%",
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 20,
+    borderRadius: 22,
   },
 
   buttonText: {
     color: "#fff",
-    fontSize: 22,            // 🔥 TEXTO MAIOR
+    fontSize: 20,
     fontWeight: "900",
-    letterSpacing: 0.7,
-    textAlign: "center",
+    letterSpacing: 0.6,
   },
 
-  /* =========================
-     BOTÃO VISITANTE
-  ========================= */
   buttonSecondary: {
     backgroundColor: "#eaf2ff",
     borderWidth: 2,
     borderColor: "#0b5394",
-    justifyContent: "center",
-    alignItems: "center",
   },
 
   secondaryText: {
     color: "#0b5394",
-    fontSize: 20,            // 🔥 MAIOR E CENTRALIZADO
+    fontSize: 18,
     fontWeight: "800",
-    letterSpacing: 0.6,
-    textAlign: "center",
+    letterSpacing: 0.5,
   },
 
-  /* =========================
-     RODAPÉ
-  ========================= */
   footerText: {
     color: "#cfe0ff",
     fontSize: 13,
     marginTop: 30,
-    textAlign: "center",
   },
 });
